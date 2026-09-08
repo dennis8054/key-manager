@@ -765,6 +765,9 @@
             let target = box;
             if (unitId) {
                 target = box.units.find(u => u.id === unitId);
+                // Ensure parent flat accordion remains open
+                openAccordions.add(`${id}`);
+                openAccordions.add(`task-${id}`);
             }
 
             if (type === 'photo') {
@@ -792,7 +795,11 @@
 
         const box = lockBoxes.find(b => b.id === id);
         let target = box;
-        if (unitId) target = box.units.find(u => u.id === unitId);
+        if (unitId) {
+            target = box.units.find(u => u.id === unitId);
+            // Ensure accordion stays open
+            openAccordions.add(`${prefix}${id}`);
+        }
 
         const oldCode = target.code || 'Not Set';
         target.code = newCode;
@@ -836,7 +843,11 @@
         const now = new Date().toLocaleString();
         const box = lockBoxes.find(b => b.id === id);
         let target = box;
-        if (unitId) target = box.units.find(u => u.id === unitId);
+        if (unitId) {
+            target = box.units.find(u => u.id === unitId);
+            // Ensure accordion stays open
+            openAccordions.add(`${prefix}${id}`);
+        }
 
         const logEntry = `Keys removed by ${staff} [Reason: ${fullReason}] (Code used: ${target.code || 'N/A'})`;
         target.status = 'red';
@@ -867,7 +878,11 @@
         const now = new Date().toLocaleString();
         const box = lockBoxes.find(b => b.id === id);
         let target = box;
-        if (unitId) target = box.units.find(u => u.id === unitId);
+        if (unitId) {
+            target = box.units.find(u => u.id === unitId);
+            // Ensure accordion stays open
+            openAccordions.add(`${prefix}${id}`);
+        }
 
         const logEntry = `Keys added by ${staff} [Note: ${fullReason}] (Code set: ${target.code || 'N/A'})`;
         target.status = 'green';
@@ -1069,17 +1084,13 @@
             }
         }
 
-        const showParentBlock = !b.isHmo && (!isTaskPage || (isTaskPage && b.status === taskFilterStatus));
-
-        if (!showParentBlock && (!b.isHmo || (b.isHmo && !hmoMarkup))) {
-            return '';
-        }
+        const showParentBlock = !isTaskPage || (isTaskPage && b.status === taskFilterStatus);
 
         return `
             <div class="lockbox-item">
                 <div class="lockbox-header">
-                    <h4>🏢 ${b.name} ${b.isHmo ? '<span style="font-size:11px; color:var(--text-muted);">(HMO Main Building)</span>' : ''}</h4>
-                    ${!b.isHmo ? `<span class="status-badge bg-${b.status}">${statusLabel}</span>` : ''}
+                    <h4>🏢 ${b.name} ${b.isHmo ? '<span style="font-size:11px; color:var(--text-muted);">(Main Building Lockbox)</span>' : ''}</h4>
+                    <span class="status-badge bg-${b.status}">${statusLabel}</span>
                 </div>
                 
                 <!-- Main Building Media -->
@@ -1163,10 +1174,9 @@
             if (b.isHmo && b.units) {
                 redAlertCount += b.units.filter(u => u.status === 'red').length;
                 grayAlertCount += b.units.filter(u => u.status === 'gray').length;
-            } else {
-                if (b.status === 'red') redAlertCount++;
-                if (b.status === 'gray') grayAlertCount++;
             }
+            if (b.status === 'red') redAlertCount++;
+            if (b.status === 'gray') grayAlertCount++;
         });
 
         const totalAttentionNeeded = redAlertCount + grayAlertCount;
@@ -1187,7 +1197,7 @@
             redTitle.innerText = `🚨 Keys Missing / Empty LockBoxes (${redAlertCount})`;
             taskList.appendChild(redTitle);
 
-            const redBoxes = lockBoxes.filter(b => (b.isHmo && b.units.some(u => u.status === 'red')) || (!b.isHmo && b.status === 'red'));
+            const redBoxes = lockBoxes.filter(b => (b.isHmo && b.units.some(u => u.status === 'red')) || b.status === 'red');
             redBoxes.forEach(b => {
                 const item = document.createElement('div');
                 item.innerHTML = renderBoxTemplate(b, true, 'red');
@@ -1202,7 +1212,7 @@
             grayTitle.innerText = `⚙️ Pending Initial Setup / Unfilled (${grayAlertCount})`;
             taskList.appendChild(grayTitle);
 
-            const grayBoxes = lockBoxes.filter(b => (b.isHmo && b.units.some(u => u.status === 'gray')) || (!b.isHmo && b.status === 'gray'));
+            const grayBoxes = lockBoxes.filter(b => (b.isHmo && b.units.some(u => u.status === 'gray')) || b.status === 'gray');
             grayBoxes.forEach(b => {
                 const item = document.createElement('div');
                 item.innerHTML = renderBoxTemplate(b, true, 'gray');
