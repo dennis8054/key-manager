@@ -67,10 +67,11 @@
             font-size: 13px;
         }
 
-        input[type="file"] {
-            font-size: 12px;
+        label {
+            font-size: 11px;
             color: var(--text-muted);
-            margin-bottom: 8px;
+            display: block;
+            margin-top: 4px;
         }
 
         button {
@@ -83,6 +84,13 @@
             cursor: pointer;
             background-color: var(--primary);
             color: #fff;
+        }
+
+        .btn-small {
+            width: auto;
+            padding: 4px 8px;
+            font-size: 11px;
+            display: inline-block;
         }
 
         .status-badge {
@@ -124,12 +132,20 @@
             color: #fff;
         }
 
-        .lockbox-img {
-            width: 100%;
-            max-height: 120px;
+        .media-gallery {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 6px;
+            margin: 6px 0;
+        }
+
+        .media-thumb {
+            width: 70px;
+            height: 70px;
             object-fit: cover;
             border-radius: 6px;
-            margin: 6px 0;
+            cursor: pointer;
+            border: 1px solid var(--border);
             background-color: #000;
         }
 
@@ -154,6 +170,21 @@
             border-radius: 4px;
             margin: 6px 0;
             border-left: 3px solid var(--primary);
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        .history-btn {
+            background: #333;
+            color: #fff;
+            border: 1px solid #555;
+            border-radius: 4px;
+            padding: 3px 6px;
+            font-size: 11px;
+            cursor: pointer;
+            width: auto;
+            margin: 0;
         }
 
         .action-block {
@@ -174,26 +205,113 @@
         .note-input {
             display: none;
         }
+
+        /* Modal / Overlay Style */
+        .modal-overlay {
+            display: none;
+            position: fixed;
+            top: 0; left: 0; width: 100%; height: 100%;
+            background: rgba(0,0,0,0.85);
+            justify-content: center;
+            align-items: center;
+            z-index: 1000;
+            padding: 15px;
+            box-sizing: border-box;
+        }
+
+        .modal-content {
+            background: var(--card-bg);
+            border-radius: 8px;
+            padding: 15px;
+            width: 100%;
+            max-width: 440px;
+            max-height: 80vh;
+            overflow-y: auto;
+            border: 1px solid var(--border);
+        }
+
+        .modal-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 12px;
+            border-bottom: 1px solid var(--border);
+            padding-bottom: 8px;
+        }
+
+        .modal-header h3 {
+            margin: 0;
+            font-size: 15px;
+            color: #fff;
+        }
+
+        .close-btn {
+            background: transparent;
+            color: var(--text-muted);
+            font-size: 18px;
+            width: auto;
+            padding: 0;
+            margin: 0;
+            cursor: pointer;
+        }
+
+        .history-list-item {
+            font-size: 11px;
+            border-bottom: 1px solid #2a2a2a;
+            padding: 6px 0;
+        }
+
+        .history-list-item:last-child {
+            border-bottom: none;
+        }
+
+        .viewer-media {
+            max-width: 100%;
+            max-height: 70vh;
+            border-radius: 6px;
+        }
     </style>
 </head>
 <body>
 
 <div class="container">
-    <h1>📦 LockBox Key Manager</h1>
+    <h1>🏠 LockBox Key Manager</h1>
 
     <!-- Add Lockbox Form -->
     <div class="card">
-        <h3>+ Add New LockBox</h3>
-        <input type="text" id="boxName" placeholder="LockBox Name / Location (e.g., Flat 1)">
-        <input type="file" id="boxPhoto" accept="image/*">
-        <button onclick="addLockBox()">Save LockBox</button>
+        <h3>+ Add New Property LockBox</h3>
+        <input type="text" id="boxName" placeholder="Property Address / Name (e.g., Flat 1)">
+        
+        <label>Add Photos:</label>
+        <input type="file" id="boxPhoto" accept="image/*" multiple>
+        
+        <label>Add Video (Upload or Record):</label>
+        <input type="file" id="boxVideo" accept="video/*" capture="environment">
+
+        <button onclick="addLockBox()">Save Property</button>
     </div>
 
     <!-- LockBox Inventory List -->
     <div class="card">
-        <h3>LockBox Inventory</h3>
+        <h3>Property Inventory</h3>
         <div id="boxList"></div>
     </div>
+</div>
+
+<!-- History Modal -->
+<div id="historyModal" class="modal-overlay">
+    <div class="modal-content">
+        <div class="modal-header">
+            <h3 id="modalBoxTitle">📜 Action History</h3>
+            <button class="close-btn" onclick="closeModal('historyModal')">✕</button>
+        </div>
+        <div id="modalHistoryContent"></div>
+    </div>
+</div>
+
+<!-- Media Viewer Modal -->
+<div id="mediaModal" class="modal-overlay" onclick="closeModal('mediaModal')">
+    <div id="mediaViewerContent" style="text-align: center;"></div>
 </div>
 
 <script>
@@ -204,41 +322,87 @@
         renderBoxes();
     }
 
-    function addLockBox() {
+    async function addLockBox() {
         const name = document.getElementById('boxName').value.trim();
         const photoInput = document.getElementById('boxPhoto');
+        const videoInput = document.getElementById('boxVideo');
 
-        if (!name) return alert('Please enter a LockBox name!');
+        if (!name) return alert('Please enter a property address or name!');
 
-        if (photoInput.files && photoInput.files[0]) {
-            const reader = new FileReader();
-            reader.onload = function(e) {
-                createBoxObject(name, e.target.result);
-            };
-            reader.readAsDataURL(photoInput.files[0]);
-        } else {
-            createBoxObject(name, '');
+        const photoDataArray = [];
+        if (photoInput.files && photoInput.files.length > 0) {
+            for (let file of photoInput.files) {
+                const data = await readFileAsDataURL(file);
+                photoDataArray.push(data);
+            }
         }
-    }
 
-    function createBoxObject(name, photoData) {
+        const videoDataArray = [];
+        if (videoInput.files && videoInput.files.length > 0) {
+            for (let file of videoInput.files) {
+                const data = await readFileAsDataURL(file);
+                videoDataArray.push(data);
+            }
+        }
+
         lockBoxes.push({
             id: Date.now(),
             name: name,
-            photo: photoData,
+            photos: photoDataArray,
+            videos: videoDataArray,
             status: 'gray',
             lastAction: 'No actions logged yet.',
-            actionTime: ''
+            actionTime: '',
+            history: []
         });
 
         document.getElementById('boxName').value = '';
         document.getElementById('boxPhoto').value = '';
+        document.getElementById('boxVideo').value = '';
         saveAndRender();
     }
 
-    function toggleReasonNote(id) {
-        const reasonSelect = document.getElementById(`reason-give-${id}`).value;
-        const noteField = document.getElementById(`note-give-${id}`);
+    function readFileAsDataURL(file) {
+        return new Promise((resolve) => {
+            const reader = new FileReader();
+            reader.onload = (e) => resolve(e.target.result);
+            reader.readAsDataURL(file);
+        });
+    }
+
+    async function addMoreMedia(id, type) {
+        const input = document.createElement('input');
+        input.type = 'file';
+        input.accept = type === 'photo' ? 'image/*' : 'video/*';
+        if (type === 'video') input.capture = 'environment';
+        input.multiple = true;
+
+        input.onchange = async (e) => {
+            const box = lockBoxes.find(b => b.id === id);
+            if (!box) return;
+
+            if (type === 'photo') {
+                if (!box.photos) box.photos = [];
+                for (let file of e.target.files) {
+                    const data = await readFileAsDataURL(file);
+                    box.photos.push(data);
+                }
+            } else {
+                if (!box.videos) box.videos = [];
+                for (let file of e.target.files) {
+                    const data = await readFileAsDataURL(file);
+                    box.videos.push(data);
+                }
+            }
+            saveAndRender();
+        };
+
+        input.click();
+    }
+
+    function toggleReasonNote(id, section) {
+        const reasonSelect = document.getElementById(`reason-${section}-${id}`).value;
+        const noteField = document.getElementById(`note-${section}-${id}`);
         if (reasonSelect === 'Other') {
             noteField.style.display = 'block';
         } else {
@@ -252,7 +416,7 @@
         const customNote = document.getElementById(`note-give-${id}`).value.trim();
         const isChecked = document.getElementById(`check-give-${id}`).checked;
 
-        if (!isChecked) return alert('Please check the box confirming keys were given!');
+        if (!isChecked) return alert('Please check the box confirming keys were removed!');
 
         let fullReason = reasonSelect;
         if (reasonSelect === 'Other') {
@@ -263,31 +427,89 @@
         const now = new Date().toLocaleString();
         const box = lockBoxes.find(b => b.id === id);
 
+        const logEntry = `Keys removed by ${staff} [Reason: ${fullReason}]`;
         box.status = 'red';
-        box.lastAction = `Keys removed by ${staff} [Reason: ${fullReason}]. LockBox is EMPTY.`;
+        box.lastAction = logEntry;
         box.actionTime = now;
+
+        if (!box.history) box.history = [];
+        box.history.unshift({ action: logEntry, time: now });
 
         saveAndRender();
     }
 
     function updateKeysAdded(id) {
         const staff = document.getElementById(`staff-add-${id}`).value;
+        const reasonSelect = document.getElementById(`reason-add-${id}`).value;
+        const customNote = document.getElementById(`note-add-${id}`).value.trim();
         const isChecked = document.getElementById(`check-add-${id}`).checked;
 
         if (!isChecked) return alert('Please check the box confirming keys are inside!');
 
+        let fullReason = reasonSelect;
+        if (reasonSelect === 'Other') {
+            if (!customNote) return alert('Please type a note explaining the reason!');
+            fullReason = `Other: ${customNote}`;
+        }
+
         const now = new Date().toLocaleString();
         const box = lockBoxes.find(b => b.id === id);
 
+        const logEntry = `Keys added by ${staff} [Note: ${fullReason}]`;
         box.status = 'green';
-        box.lastAction = `Keys added to LockBox by ${staff}.`;
+        box.lastAction = logEntry;
         box.actionTime = now;
+
+        if (!box.history) box.history = [];
+        box.history.unshift({ action: logEntry, time: now });
 
         saveAndRender();
     }
 
+    function openHistory(id) {
+        const box = lockBoxes.find(b => b.id === id);
+        if (!box) return;
+
+        document.getElementById('modalBoxTitle').innerText = `📜 History: ${box.name}`;
+        const container = document.getElementById('modalHistoryContent');
+        container.innerHTML = '';
+
+        if (!box.history || box.history.length === 0) {
+            container.innerHTML = '<p style="font-size:12px; color:var(--text-muted);">No recorded history yet.</p>';
+        } else {
+            box.history.forEach(item => {
+                const div = document.createElement('div');
+                div.className = 'history-list-item';
+                div.innerHTML = `
+                    <strong>${item.action}</strong><br>
+                    <span style="color:var(--text-muted); font-size:10px;">🕒 ${item.time}</span>
+                `;
+                container.appendChild(div);
+            });
+        }
+
+        document.getElementById('historyModal').style.display = 'flex';
+    }
+
+    function openMediaViewer(src, type) {
+        const content = document.getElementById('mediaViewerContent');
+        if (type === 'image') {
+            content.innerHTML = `<img src="${src}" class="viewer-media">`;
+        } else {
+            content.innerHTML = `<video src="${src}" class="viewer-media" controls autoplay></video>`;
+        }
+        document.getElementById('mediaModal').style.display = 'flex';
+    }
+
+    function closeModal(id) {
+        document.getElementById(id).style.display = 'none';
+        if (id === 'mediaModal') {
+            document.getElementById('mediaViewerContent').innerHTML = '';
+        }
+    }
+
     function deleteBox(id) {
-        if (confirm("Delete this LockBox?")) {
+        if (confirm("Delete this property LockBox?")) {
             lockBoxes = lockBoxes.filter(b => b.id !== id);
             saveAndRender();
         }
@@ -298,7 +520,7 @@
         list.innerHTML = '';
 
         if (lockBoxes.length === 0) {
-            list.innerHTML = '<p style="text-align:center; color:var(--text-muted); font-size:12px;">No LockBoxes added yet.</p>';
+            list.innerHTML = '<p style="text-align:center; color:var(--text-muted); font-size:12px;">No properties added yet.</p>';
             return;
         }
 
@@ -307,19 +529,35 @@
             if (b.status === 'green') statusLabel = "Green: Keys Inside";
             if (b.status === 'red') statusLabel = "Red: Keys Missing";
 
+            const photos = b.photos || (b.photo ? [b.photo] : []);
+            const videos = b.videos || [];
+
             const item = document.createElement('div');
             item.className = 'lockbox-item';
             item.innerHTML = `
                 <div class="lockbox-header">
-                    <h4>📦 ${b.name}</h4>
+                    <h4>🏠 ${b.name}</h4>
                     <span class="status-badge bg-${b.status}">${statusLabel}</span>
                 </div>
                 
-                ${b.photo ? `<img src="${b.photo}" class="lockbox-img">` : ''}
+                <!-- Media Gallery -->
+                <div class="media-gallery">
+                    ${photos.map(p => `<img src="${p}" class="media-thumb" onclick="openMediaViewer('${p}', 'image')">`).join('')}
+                    ${videos.map(v => `<video src="${v}" class="media-thumb" onclick="openMediaViewer('${v}', 'video')"></video>`).join('')}
+                </div>
 
+                <div style="display:flex; gap:6px; margin-bottom:8px;">
+                    <button class="btn-small" style="background:#333;" onclick="addMoreMedia(${b.id}, 'photo')">+ Photo</button>
+                    <button class="btn-small" style="background:#333;" onclick="addMoreMedia(${b.id}, 'video')">+ Video</button>
+                </div>
+
+                <!-- Last Action Banner -->
                 <div class="log-info">
-                    <strong>Last Status:</strong> ${b.lastAction}<br>
-                    ${b.actionTime ? `<span>🕒 ${b.actionTime}</span>` : ''}
+                    <div>
+                        <strong>Last Action:</strong> ${b.lastAction}<br>
+                        ${b.actionTime ? `<span>🕒 ${b.actionTime}</span>` : ''}
+                    </div>
+                    <button class="history-btn" onclick="openHistory(${b.id})">🕒 History</button>
                 </div>
 
                 <!-- Keys Out Section -->
@@ -331,7 +569,7 @@
                         <option value="Denis">By: Denis</option>
                     </select>
 
-                    <select id="reason-give-${b.id}" onchange="toggleReasonNote(${b.id})">
+                    <select id="reason-give-${b.id}" onchange="toggleReasonNote(${b.id}, 'give')">
                         <option value="Tenant Moved In">Reason: Tenant Moved In</option>
                         <option value="Tenant Lost Keys (Code Given)">Reason: Tenant Lost Keys (Access Code Given)</option>
                         <option value="Other">Reason: Other (Type Below)</option>
@@ -356,6 +594,14 @@
                         <option value="Denis">By: Denis</option>
                     </select>
 
+                    <select id="reason-add-${b.id}" onchange="toggleReasonNote(${b.id}, 'add')">
+                        <option value="Refilled / Standard">Reason: Refilled / Standard</option>
+                        <option value="Added Spare Keys">Reason: Added Spare Keys</option>
+                        <option value="Other">Reason: Other (Type Below)</option>
+                    </select>
+
+                    <input type="text" id="note-add-${b.id}" class="note-input" placeholder="Enter reason/note here...">
+
                     <div class="checkbox-group">
                         <input type="checkbox" id="check-add-${b.id}">
                         <label for="check-add-${b.id}">Keys placed inside LockBox</label>
@@ -364,7 +610,7 @@
                     <button style="background-color: var(--green);" onclick="updateKeysAdded(${b.id})">Update: Keys Inside</button>
                 </div>
 
-                <button style="background: transparent; color: #777; width: auto; font-size: 11px; margin-top: 6px; padding: 2px 4px;" onclick="deleteBox(${b.id})">🗑 Delete LockBox</button>
+                <button style="background: transparent; color: #777; width: auto; font-size: 11px; margin-top: 6px; padding: 2px 4px;" onclick="deleteBox(${b.id})">🗑 Delete Property</button>
             `;
             list.appendChild(item);
         });
