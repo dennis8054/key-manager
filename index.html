@@ -3,44 +3,52 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>LockBox Key Manager</title>
+    <title>Haven Rise Shelter - LockBox Key Manager</title>
     <style>
         :root {
-            --bg: #121212;
-            --card-bg: #1e1e1e;
-            --section-bg: #282828;
-            --text: #e0e0e0;
-            --text-muted: #aaaaaa;
-            --border: #333333;
+            --haven-pink: #d81b60;
+            --haven-pink-dark: #ad1457;
+            --haven-blue: #00a8a8;
+            --haven-blue-dark: #008080;
+            
+            --bg: #12181f;
+            --card-bg: #1a222d;
+            --section-bg: #222c3a;
+            --text: #e1e7ec;
+            --text-muted: #8b99a8;
+            --border: #2a3545;
             --gray: #6c757d;
-            --green: #28a745;
-            --red: #dc3545;
-            --primary: #0d6efd;
-            --sidebar-bg: #181818;
-            --input-bg: #2a2a2a;
-            --zone-bg: #002b49;
-            --zone-text: #6ea8fe;
-            --parent-header-bg: #1e293b;
+            --green: #10b981;
+            --red: #ef4444;
+            --orange: #f59e0b;
+            --purple: #8b5cf6;
+            --primary: var(--haven-pink);
+            --primary-hover: var(--haven-pink-dark);
+            --sidebar-bg: #0d1217;
+            --input-bg: #151c24;
+            --zone-bg: #1e293b;
+            --zone-text: #38bdf8;
+            --parent-header-bg: #1a222d;
             --parent-border: #334155;
-            --unit-bg: #1e2030;
-            --unit-border: #4f46e5;
+            --unit-bg: #141b24;
+            --unit-border: var(--haven-blue);
         }
 
         body.light-mode {
-            --bg: #f4f6f9;
+            --bg: #f3f5f8;
             --card-bg: #ffffff;
-            --section-bg: #f8f9fa;
-            --text: #212529;
-            --text-muted: #6c757d;
-            --border: #dee2e6;
-            --sidebar-bg: #e9ecef;
+            --section-bg: #f8fafc;
+            --text: #1e293b;
+            --text-muted: #64748b;
+            --border: #e2e8f0;
+            --sidebar-bg: #0f172a;
             --input-bg: #ffffff;
-            --zone-bg: #e7f1ff;
-            --zone-text: #0a58ca;
-            --parent-header-bg: #e2e8f0;
+            --zone-bg: #e0f2fe;
+            --zone-text: #0369a1;
+            --parent-header-bg: #ffffff;
             --parent-border: #cbd5e1;
-            --unit-bg: #f0f3ff;
-            --unit-border: #6366f1;
+            --unit-bg: #f8fafc;
+            --unit-border: var(--haven-blue);
         }
 
         body {
@@ -53,88 +61,238 @@
             min-height: 100vh;
         }
 
+        /* SIDEBAR STYLES */
         .sidebar {
-            width: 60px;
+            width: 240px;
             background-color: var(--sidebar-bg);
             border-right: 1px solid var(--border);
             display: flex;
             flex-direction: column;
-            align-items: center;
-            padding-top: 15px;
-            gap: 20px;
             position: sticky;
             top: 0;
             height: 100vh;
             box-sizing: border-box;
             z-index: 100;
+            overflow-y: auto;
+            color: #94a3b8;
         }
 
-        .nav-icon {
-            width: 42px;
-            height: 42px;
-            border-radius: 10px;
+        .sidebar-brand {
+            padding: 16px 20px;
             display: flex;
             align-items: center;
-            justify-content: center;
-            font-size: 20px;
+            gap: 10px;
+            border-bottom: 1px solid var(--border);
+        }
+
+        .sidebar-brand img {
+            height: 32px;
+            width: auto;
+        }
+
+        .sidebar-brand-title {
+            font-size: 16px;
+            font-weight: 800;
+            color: var(--haven-pink);
+            letter-spacing: -0.5px;
+            margin: 0;
+            line-height: 1;
+        }
+
+        .sidebar-brand-sub {
+            font-size: 10px;
+            color: #38bdf8;
+            font-weight: 600;
+        }
+
+        .sidebar-section {
+            padding: 15px 12px 5px 12px;
+            font-size: 10px;
+            font-weight: 700;
+            text-transform: uppercase;
+            letter-spacing: 0.8px;
+            color: #64748b;
+        }
+
+        .nav-item {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            padding: 9px 16px;
+            color: #94a3b8;
+            text-decoration: none;
+            font-size: 13px;
+            font-weight: 500;
+            border-radius: 6px;
+            margin: 2px 8px;
             cursor: pointer;
             background: transparent;
-            color: var(--text);
             border: none;
+            width: calc(100% - 16px);
+            text-align: left;
             position: relative;
         }
 
-        .nav-icon.active {
-            background-color: var(--primary);
-            color: #fff;
+        .nav-item:hover {
+            background-color: rgba(255, 255, 255, 0.05);
+            color: #f1f5f9;
+        }
+
+        .nav-item.active {
+            background-color: var(--haven-pink);
+            color: #ffffff;
+            font-weight: 600;
         }
 
         .badge-alert {
             position: absolute;
-            top: 2px;
-            right: 2px;
+            right: 12px;
             background: var(--red);
             color: #fff;
             font-size: 10px;
             font-weight: bold;
-            padding: 2px 5px;
+            padding: 2px 6px;
             border-radius: 10px;
         }
 
+        /* APP WRAPPER & MAIN CONTAINER */
         .app-wrapper {
             flex: 1;
-            padding: 15px;
             display: flex;
             flex-direction: column;
-            align-items: center;
+            overflow-x: hidden;
         }
 
-        .container {
-            width: 100%;
-            max-width: 480px;
-            transition: max-width 0.3s;
-        }
-
-        body.pc-mode .container {
-            max-width: 900px;
-        }
-
-        .top-toolbar {
+        .top-navbar {
+            height: 56px;
+            background-color: var(--card-bg);
+            border-bottom: 1px solid var(--border);
             display: flex;
             justify-content: space-between;
             align-items: center;
-            width: 100%;
-            margin-bottom: 15px;
+            padding: 0 24px;
         }
 
-        .top-toolbar h1 {
+        .page-title {
             font-size: 18px;
+            font-weight: 700;
             margin: 0;
+            color: var(--text);
         }
 
-        .tool-btns {
+        .top-tools {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+
+        .container {
+            padding: 20px 24px;
+            width: 100%;
+            max-width: 1400px;
+            box-sizing: border-box;
+            margin: 0 auto;
+        }
+
+        /* METRIC STATS ROW */
+        .stats-row {
+            display: flex;
+            gap: 12px;
+            margin-bottom: 20px;
+            overflow-x: auto;
+            padding-bottom: 4px;
+        }
+
+        .stat-card {
+            background-color: var(--card-bg);
+            border: 1px solid var(--border);
+            border-radius: 6px;
+            padding: 12px 16px;
+            min-width: 140px;
+            flex: 1;
+        }
+
+        .stat-card.active {
+            border-color: var(--haven-blue);
+        }
+
+        .stat-label {
+            font-size: 11px;
+            color: var(--text-muted);
+            font-weight: 600;
+            margin-bottom: 4px;
+            display: flex;
+            align-items: center;
+            gap: 6px;
+        }
+
+        .stat-value {
+            font-size: 20px;
+            font-weight: 700;
+            color: var(--text);
+        }
+
+        /* FORM CARDS & INPUTS */
+        .card {
+            background-color: var(--card-bg);
+            border-radius: 8px;
+            padding: 16px;
+            margin-bottom: 16px;
+            border: 1px solid var(--border);
+        }
+
+        .card h3 {
+            font-size: 14px;
+            margin: 0 0 12px 0;
+            color: var(--text);
+            font-weight: 600;
+        }
+
+        .address-row {
             display: flex;
             gap: 8px;
+        }
+
+        input[type="text"], input[type="number"], select {
+            width: 100%;
+            padding: 8px 12px;
+            margin-top: 4px;
+            margin-bottom: 10px;
+            border-radius: 6px;
+            border: 1px solid var(--border);
+            background-color: var(--input-bg);
+            color: var(--text);
+            box-sizing: border-box;
+            font-size: 13px;
+            outline: none;
+        }
+
+        input[type="text"]:focus, select:focus {
+            border-color: var(--haven-blue);
+        }
+
+        label {
+            font-size: 11px;
+            color: var(--text-muted);
+            display: block;
+            margin-top: 4px;
+            font-weight: 500;
+        }
+
+        button {
+            padding: 8px 14px;
+            border-radius: 6px;
+            border: none;
+            font-weight: 600;
+            font-size: 13px;
+            cursor: pointer;
+            background-color: var(--primary);
+            color: #fff;
+            transition: opacity 0.2s;
+        }
+
+        button:hover {
+            opacity: 0.9;
         }
 
         .icon-btn {
@@ -144,57 +302,10 @@
             padding: 6px 10px;
             border-radius: 6px;
             cursor: pointer;
-            font-size: 14px;
-        }
-
-        .card {
-            background-color: var(--card-bg);
-            border-radius: 8px;
-            padding: 12px;
-            margin-bottom: 12px;
-            border: 1px solid var(--border);
-        }
-
-        .card h3 {
-            font-size: 14px;
-            margin: 0 0 10px 0;
-        }
-
-        .address-row {
+            font-size: 13px;
             display: flex;
-            gap: 6px;
-        }
-
-        input[type="text"], input[type="number"], select {
-            width: 100%;
-            padding: 8px 10px;
-            margin-top: 4px;
-            margin-bottom: 8px;
-            border-radius: 6px;
-            border: 1px solid var(--border);
-            background-color: var(--input-bg);
-            color: var(--text);
-            box-sizing: border-box;
-            font-size: 13px;
-        }
-
-        label {
-            font-size: 11px;
-            color: var(--text-muted);
-            display: block;
-            margin-top: 4px;
-        }
-
-        button {
-            width: 100%;
-            padding: 8px 10px;
-            border-radius: 6px;
-            border: none;
-            font-weight: 600;
-            font-size: 13px;
-            cursor: pointer;
-            background-color: var(--primary);
-            color: #fff;
+            align-items: center;
+            justify-content: center;
         }
 
         .btn-small {
@@ -204,38 +315,40 @@
             display: inline-block;
         }
 
+        /* STATUS BADGES */
         .status-badge {
-            display: inline-block;
-            padding: 4px 8px;
+            display: inline-flex;
+            align-items: center;
+            padding: 3px 10px;
             border-radius: 12px;
-            color: #fff;
-            font-weight: bold;
+            font-weight: 600;
             font-size: 11px;
-            text-transform: uppercase;
+            text-transform: capitalize;
         }
 
-        .bg-gray { background-color: var(--gray); }
-        .bg-green { background-color: var(--green); }
-        .bg-red { background-color: var(--red); }
+        .bg-gray { background-color: rgba(108, 117, 125, 0.2); color: #a1a1aa; border: 1px solid rgba(108, 117, 125, 0.4); }
+        .bg-green { background-color: rgba(16, 185, 129, 0.15); color: #34d399; border: 1px solid rgba(16, 185, 129, 0.3); }
+        .bg-red { background-color: rgba(239, 68, 68, 0.15); color: #f87171; border: 1px solid rgba(239, 68, 68, 0.3); }
 
         .zone-header {
             background-color: var(--zone-bg);
             color: var(--zone-text);
-            font-size: 13px;
-            font-weight: bold;
-            padding: 8px 12px;
+            font-size: 12px;
+            font-weight: 700;
+            padding: 10px 14px;
             border-radius: 6px;
-            margin: 14px 0 8px 0;
-            border-left: 4px solid var(--primary);
+            margin: 16px 0 10px 0;
+            border-left: 3px solid var(--haven-blue);
             display: flex;
             justify-content: space-between;
         }
 
+        /* LOCKBOX CARD ITEM */
         .lockbox-item {
             background-color: var(--parent-header-bg);
             border: 1px solid var(--parent-border);
             border-radius: 8px;
-            padding: 12px;
+            padding: 14px;
             margin-bottom: 12px;
         }
 
@@ -243,7 +356,14 @@
             display: flex;
             justify-content: space-between;
             align-items: center;
-            margin-bottom: 6px;
+            margin-bottom: 8px;
+        }
+
+        .lockbox-header h4 {
+            margin: 0;
+            font-size: 14px;
+            color: var(--text);
+            font-weight: 600;
         }
 
         .hmo-toggle-btn {
@@ -255,13 +375,14 @@
             display: flex;
             align-items: center;
             justify-content: space-between;
+            width: 100%;
         }
 
         .hmo-units-wrapper {
             display: none;
             margin-top: 8px;
-            padding-left: 6px;
-            border-left: 2px dashed var(--unit-border);
+            padding-left: 10px;
+            border-left: 2px solid var(--unit-border);
         }
 
         .hmo-units-wrapper.open {
@@ -270,19 +391,19 @@
 
         .hmo-unit-box {
             background-color: var(--unit-bg);
-            border-left: 4px solid var(--unit-border);
+            border-left: 3px solid var(--unit-border);
             border: 1px solid var(--border);
-            padding: 10px;
+            padding: 12px;
             border-radius: 6px;
             margin-top: 8px;
         }
 
         .code-display-box {
-            background-color: rgba(0, 0, 0, 0.25);
-            border: 1px dashed var(--primary);
-            padding: 6px 8px;
+            background-color: rgba(0, 0, 0, 0.2);
+            border: 1px solid var(--border);
+            padding: 8px 10px;
             border-radius: 6px;
-            margin: 6px 0;
+            margin: 8px 0;
             font-size: 12px;
             display: flex;
             justify-content: space-between;
@@ -304,19 +425,20 @@
         }
 
         .media-thumb {
-            width: 70px;
-            height: 70px;
+            width: 60px;
+            height: 60px;
             object-fit: cover;
             border-radius: 6px;
             border: 1px solid var(--border);
             background-color: #000;
+            cursor: pointer;
         }
 
         .checkbox-group {
             display: flex;
             align-items: center;
             gap: 6px;
-            margin: 6px 0;
+            margin: 8px 0;
             font-size: 12px;
         }
 
@@ -329,10 +451,10 @@
             font-size: 11px;
             color: var(--text-muted);
             background: var(--section-bg);
-            padding: 6px 8px;
-            border-radius: 4px;
-            margin: 6px 0;
-            border-left: 3px solid var(--primary);
+            padding: 8px 10px;
+            border-radius: 6px;
+            margin: 8px 0;
+            border-left: 3px solid var(--haven-pink);
             display: flex;
             justify-content: space-between;
             align-items: center;
@@ -343,7 +465,7 @@
             color: var(--text);
             border: 1px solid var(--border);
             border-radius: 4px;
-            padding: 3px 6px;
+            padding: 4px 8px;
             font-size: 11px;
             width: auto;
             margin: 0;
@@ -358,7 +480,7 @@
         }
 
         details.action-block summary {
-            padding: 8px 10px;
+            padding: 10px;
             font-size: 12px;
             font-weight: 600;
             cursor: pointer;
@@ -369,9 +491,7 @@
             justify-content: space-between;
         }
 
-        details.action-block summary::-webkit-details-marker {
-            display: none;
-        }
+        details.action-block summary::-webkit-details-marker { display: none; }
 
         details.action-block summary::after {
             content: "▼";
@@ -384,7 +504,7 @@
         }
 
         .action-content {
-            padding: 8px 10px 10px 10px;
+            padding: 10px;
             border-top: 1px solid var(--border);
         }
 
@@ -396,7 +516,7 @@
             display: none;
             position: fixed;
             top: 0; left: 0; width: 100%; height: 100%;
-            background: rgba(0,0,0,0.85);
+            background: rgba(0,0,0,0.8);
             justify-content: center;
             align-items: center;
             z-index: 1000;
@@ -407,9 +527,9 @@
         .modal-content {
             background: var(--card-bg);
             border-radius: 8px;
-            padding: 15px;
+            padding: 16px;
             width: 100%;
-            max-width: 440px;
+            max-width: 480px;
             max-height: 80vh;
             overflow-y: auto;
             border: 1px solid var(--border);
@@ -436,7 +556,7 @@
         .history-list-item {
             font-size: 11px;
             border-bottom: 1px solid var(--border);
-            padding: 6px 0;
+            padding: 8px 0;
         }
 
         .viewer-media {
@@ -449,21 +569,55 @@
 <body>
 
 <div class="sidebar">
-    <button id="navHome" class="nav-icon active" onclick="switchTab('home')" title="Main Properties">🏠</button>
-    <button id="navTasks" class="nav-icon" onclick="switchTab('tasks')" title="Action Required">
-        ⚠️
+    <div class="sidebar-brand">
+        <img src="1788858658935.png" alt="Haven Logo">
+        <div>
+            <div class="sidebar-brand-title">haven</div>
+            <div class="sidebar-brand-sub">rise shelter</div>
+        </div>
+    </div>
+
+    <div class="sidebar-section">Dashboard</div>
+    <button id="navHome" class="nav-item active" onclick="switchTab('home')">
+        <span>🏠</span> Properties
+    </button>
+    <button id="navTasks" class="nav-item" onclick="switchTab('tasks')">
+        <span>⚠️</span> Action Required
         <span id="alertCount" class="badge-alert" style="display:none;">0</span>
     </button>
+
+    <div class="sidebar-section">Management</div>
+    <a class="nav-item"><span>🏢</span> Properties</a>
+    <a class="nav-item"><span>🔑</span> LockBoxes</a>
+    <a class="nav-item"><span>📋</span> Inspections</a>
+
+    <div class="sidebar-section">Operations</div>
+    <a class="nav-item"><span>🛠️</span> Maintenance</a>
+    <a class="nav-item"><span>🧹</span> Cleaning</a>
 </div>
 
 <div class="app-wrapper">
+    <div class="top-navbar">
+        <h2 class="page-title" id="pageTitleText">LockBox Key Manager</h2>
+        <div class="top-tools">
+            <button class="icon-btn" onclick="toggleTheme()" id="themeBtn">🌙</button>
+        </div>
+    </div>
+
     <div class="container">
-        
-        <div class="top-toolbar">
-            <h1 id="pageHeading">🏠 LockBox Manager</h1>
-            <div class="tool-btns">
-                <button class="icon-btn" onclick="toggleTheme()" id="themeBtn">🌙</button>
-                <button class="icon-btn" onclick="toggleViewMode()" id="viewModeBtn">📱</button>
+
+        <div class="stats-row">
+            <div class="stat-card active">
+                <div class="stat-label"><span>🟢</span> Keys Inside</div>
+                <div class="stat-value" id="statKeysInside">0</div>
+            </div>
+            <div class="stat-card">
+                <div class="stat-label"><span>🔴</span> Keys Missing</div>
+                <div class="stat-value" id="statKeysMissing">0</div>
+            </div>
+            <div class="stat-card">
+                <div class="stat-label"><span>⚪</span> Pending Setup</div>
+                <div class="stat-value" id="statPending">0</div>
             </div>
         </div>
 
@@ -472,18 +626,18 @@
                 <h3>+ Add New Property LockBox</h3>
                 <div class="address-row">
                     <input type="text" id="boxName" placeholder="Full Address (e.g. 35 Lincoln Rd, Erith DA8 2DX)">
-                    <button class="icon-btn" style="width: auto; height: 35px; margin-top: 4px;" onclick="findAddress()">🔍</button>
+                    <button class="icon-btn" style="width: 40px; height: 35px; margin-top: 4px;" onclick="findAddress()">🔍</button>
                 </div>
 
                 <label>Main LockBox Code:</label>
                 <input type="text" id="initialCode" placeholder="e.g. 4589 or C1234X">
 
-                <div class="checkbox-group" style="margin: 8px 0;">
+                <div class="checkbox-group">
                     <input type="checkbox" id="isHmo" onchange="toggleHmoOptions()">
-                    <label for="isHmo" style="font-weight: bold; font-size: 12px;">Is this an HMO / Multi-Unit Building?</label>
+                    <label for="isHmo" style="font-weight: bold; font-size: 12px; color: var(--text);">Is this an HMO / Multi-Unit Building?</label>
                 </div>
 
-                <div id="hmoInputs" style="display:none; background: var(--section-bg); padding: 8px; border-radius: 6px; margin-bottom: 8px;">
+                <div id="hmoInputs" style="display:none; background: var(--section-bg); padding: 10px; border-radius: 6px; margin-bottom: 10px;">
                     <label>Number of Flats / Rooms:</label>
                     <input type="number" id="hmoCount" min="1" max="20" value="4">
                     <label>Naming Prefix:</label>
@@ -495,15 +649,15 @@
                 </div>
                 
                 <label>Add Photos:</label>
-                <input type="file" id="boxPhoto" accept="image/*" multiple>
+                <input type="file" id="boxPhoto" accept="image/*" multiple style="margin-bottom:8px;">
                 
                 <label>Add Video:</label>
-                <input type="file" id="boxVideo" accept="video/*" capture="environment">
+                <input type="file" id="boxVideo" accept="video/*" capture="environment" style="margin-bottom:8px;">
 
-                <button onclick="addLockBox()" style="margin-top: 8px;">Save Property</button>
+                <button onclick="addLockBox()" style="margin-top: 8px; width: 100%;">Save Property</button>
             </div>
 
-            <input type="text" id="searchFilter" onkeyup="handleSearch()" placeholder="🔍 Search address or flat..." style="margin-bottom: 12px;">
+            <input type="text" id="searchFilter" onkeyup="handleSearch()" placeholder="🔍 Search address or flat..." style="margin-bottom: 16px;">
 
             <div id="boxList"></div>
         </div>
@@ -521,7 +675,7 @@
 <div id="historyModal" class="modal-overlay">
     <div class="modal-content">
         <div class="modal-header">
-            <h3 id="modalBoxTitle">📜 History</h3>
+            <h3 id="modalBoxTitle" style="margin:0;">📜 History</h3>
             <button class="close-btn" onclick="closeModal('historyModal')">✕</button>
         </div>
         <div id="modalHistoryContent"></div>
@@ -535,11 +689,9 @@
 <script>
     let lockBoxes = JSON.parse(localStorage.getItem('myLockBoxes')) || [];
     let isDarkMode = localStorage.getItem('isDarkMode') !== 'false';
-    let isPcMode = localStorage.getItem('isPcMode') === 'true';
     let openAccordions = new Set();
 
     if (!isDarkMode) document.body.classList.add('light-mode');
-    if (isPcMode) document.body.classList.add('pc-mode');
 
     function detectZone(address) {
         if (!address) return "General Area";
@@ -565,10 +717,31 @@
         }
     }
 
+    function updateStats() {
+        let inside = 0, missing = 0, pending = 0;
+        lockBoxes.forEach(b => {
+            if (b.status === 'green') inside++;
+            else if (b.status === 'red') missing++;
+            else pending++;
+
+            if (b.isHmo && b.units) {
+                b.units.forEach(u => {
+                    if (u.status === 'green') inside++;
+                    else if (u.status === 'red') missing++;
+                    else pending++;
+                });
+            }
+        });
+        document.getElementById('statKeysInside').innerText = inside;
+        document.getElementById('statKeysMissing').innerText = missing;
+        document.getElementById('statPending').innerText = pending;
+    }
+
     function saveAndRender() {
         localStorage.setItem('myLockBoxes', JSON.stringify(lockBoxes));
         renderBoxes();
         renderTasks();
+        updateStats();
     }
 
     function handleSearch() {
@@ -582,18 +755,13 @@
         document.body.classList.toggle('light-mode', !isDarkMode);
     }
 
-    function toggleViewMode() {
-        isPcMode = !isPcMode;
-        localStorage.setItem('isPcMode', isPcMode);
-        document.body.classList.toggle('pc-mode', isPcMode);
-    }
-
     function switchTab(tab) {
         openAccordions.clear();
         document.getElementById('navHome').classList.toggle('active', tab === 'home');
         document.getElementById('navTasks').classList.toggle('active', tab === 'tasks');
         document.getElementById('pageHome').classList.toggle('active', tab === 'home');
         document.getElementById('pageTasks').classList.toggle('active', tab === 'tasks');
+        document.getElementById('pageTitleText').innerText = tab === 'home' ? 'LockBox Key Manager' : 'Action Required';
     }
 
     function findAddress() {
@@ -752,7 +920,6 @@
         target.history = target.history || [];
         target.history.unshift({ action: logEntry, time: now });
 
-        // If keys were taken from MAIN lockbox for a SPECIFIC FLAT, update that flat to 'red' (missing) as well
         if (!unitId && box.isHmo && targetFlatValue && targetFlatValue !== 'Whole Building') {
             const matchedUnit = box.units.find(u => u.unitName === targetFlatValue);
             if (matchedUnit) {
@@ -855,8 +1022,8 @@
             <div class="code-display-box">
                 <div>🔑 Code: <span class="code-num">${targetObj.code || 'Not Set'}</span></div>
                 <div style="display:flex; gap:4px; align-items:center;">
-                    <input type="text" id="${keyPrefix}code-input-${b.id}" placeholder="New code" style="width: 80px; padding: 3px 6px; margin: 0; font-size: 11px;">
-                    <button class="btn-small" style="padding: 3px 6px;" onclick="updateCode(${b.id}, '${prefix}', ${unitId})">Set Code</button>
+                    <input type="text" id="${keyPrefix}code-input-${b.id}" placeholder="New code" style="width: 90px; padding: 4px 6px; margin: 0; font-size: 11px;">
+                    <button class="btn-small" style="padding: 4px 8px;" onclick="updateCode(${b.id}, '${prefix}', ${unitId})">Set Code</button>
                 </div>
             </div>
 
@@ -899,7 +1066,7 @@
                         <label for="${keyPrefix}check-give-${b.id}">Keys removed (LockBox empty)</label>
                     </div>
 
-                    <button style="background-color: var(--red);" onclick="updateKeysGiven(${b.id}, '${prefix}', ${unitId})">Update: Keys Removed</button>
+                    <button style="background-color: var(--red); width: 100%;" onclick="updateKeysGiven(${b.id}, '${prefix}', ${unitId})">Update: Keys Removed</button>
                 </div>
             </details>
 
@@ -933,7 +1100,7 @@
                         <label for="${keyPrefix}check-add-${b.id}">Keys inside LockBox</label>
                     </div>
 
-                    <button style="background-color: var(--green);" onclick="updateKeysAdded(${b.id}, '${prefix}', ${unitId})">Update: Keys Inside</button>
+                    <button style="background-color: var(--green); width: 100%;" onclick="updateKeysAdded(${b.id}, '${prefix}', ${unitId})">Update: Keys Inside</button>
                 </div>
             </details>
         `;
@@ -1056,6 +1223,7 @@
 
     renderBoxes();
     renderTasks();
+    updateStats();
 </script>
 
 </body>
