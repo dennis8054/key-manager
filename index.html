@@ -18,6 +18,8 @@
             --primary: #0d6efd;
             --sidebar-bg: #181818;
             --input-bg: #2a2a2a;
+            --zone-bg: #002b49;
+            --zone-text: #6ea8fe;
         }
 
         body.light-mode {
@@ -29,6 +31,8 @@
             --border: #dee2e6;
             --sidebar-bg: #e9ecef;
             --input-bg: #ffffff;
+            --zone-bg: #e7f1ff;
+            --zone-text: #0a58ca;
         }
 
         body {
@@ -214,6 +218,25 @@
         .bg-gray { background-color: var(--gray); }
         .bg-green { background-color: var(--green); }
         .bg-red { background-color: var(--red); }
+
+        /* Zone / Area Headers */
+        .zone-header {
+            background-color: var(--zone-bg);
+            color: var(--zone-text);
+            font-size: 13px;
+            font-weight: bold;
+            padding: 8px 12px;
+            border-radius: 6px;
+            margin: 14px 0 8px 0;
+            border-left: 4px solid var(--primary);
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        .zone-header:first-child {
+            margin-top: 0;
+        }
 
         .lockbox-item {
             border-bottom: 1px solid var(--border);
@@ -418,7 +441,7 @@
             <div class="card">
                 <h3>+ Add New Property LockBox</h3>
                 <div class="address-row">
-                    <input type="text" id="boxName" placeholder="Property Address / Location">
+                    <input type="text" id="boxName" placeholder="Full Address with Postcode (e.g. 52a Norfolk Road, Enfield EN3 4BG)">
                     <button class="icon-btn" style="width: auto; height: 35px; margin-top: 4px;" onclick="findAddress()" title="Find / Map Address">🔍</button>
                 </div>
                 
@@ -433,7 +456,7 @@
 
             <!-- Inventory List -->
             <div class="card">
-                <h3>Property Inventory</h3>
+                <h3>Property Inventory (Grouped by Zones)</h3>
                 <div id="boxList"></div>
             </div>
         </div>
@@ -476,6 +499,29 @@
     if (!isDarkMode) document.body.classList.add('light-mode');
     if (isPcMode) document.body.classList.add('pc-mode');
     updateToolbarIcons();
+
+    // Automatic Zone / Council Mapping based on Postcode Prefix or Keyword
+    function detectZone(address) {
+        if (!address) return "General Area";
+        const upper = address.toUpperCase();
+
+        // 1. Specific Postcode Outward Code Matching
+        if (/\bEN1\b|\bEN2\b|\bEN3\b/.test(upper) || upper.includes("ENFIELD")) return "Enfield Zone";
+        if (/\bEN9\b/.test(upper) || upper.includes("WALTHAM ABBEY") || upper.includes("EPPING FOREST")) return "Epping Forest District";
+        if (/\bEN6\b/.test(upper) || upper.includes("POTTERS BAR") || upper.includes("HERTSMERE")) return "Hertsmere Borough";
+        if (/\bN15\b|\bN17\b|\bN8\b/.test(upper) || upper.includes("HARINGEY") || upper.includes("TOTTENHAM")) return "Haringey Zone";
+        if (/\bE4\b|\bE11\b|\bE17\b/.test(upper) || upper.includes("WALTHAM FOREST") || upper.includes("WALTHAMSTOW")) return "Waltham Forest Zone";
+        if (/\bN9\b|\bN18\b/.test(upper) || upper.includes("EDMONTON")) return "Edmonton / Enfield South";
+        if (/\bEN8\b/.test(upper) || upper.includes("WALTHAM CROSS")) return "Waltham Cross Zone";
+
+        // 2. Fallback Broader Postal Prefix Extraction
+        const postalMatch = upper.match(/\b([A-Z]{1,2}[0-9]{1,2})\b/);
+        if (postalMatch && postalMatch[1]) {
+            return `Zone ${postalMatch[1]}`;
+        }
+
+        return "Other Area";
+    }
 
     function saveAndRender() {
         localStorage.setItem('myLockBoxes', JSON.stringify(lockBoxes));
@@ -539,9 +585,12 @@
             }
         }
 
+        const zone = detectZone(name);
+
         lockBoxes.push({
             id: Date.now(),
             name: name,
+            zone: zone,
             photos: photoDataArray,
             videos: videoDataArray,
             status: 'gray',
@@ -800,6 +849,16 @@
         `;
     }
 
+    function groupBoxesByZone(boxes) {
+        const groups = {};
+        boxes.forEach(b => {
+            const z = b.zone || detectZone(b.name);
+            if (!groups[z]) groups[z] = [];
+            groups[z].push(b);
+        });
+        return groups;
+    }
+
     function renderBoxes() {
         const list = document.getElementById('boxList');
         list.innerHTML = '';
@@ -809,11 +868,20 @@
             return;
         }
 
-        lockBoxes.forEach(b => {
-            const item = document.createElement('div');
-            item.innerHTML = renderBoxTemplate(b, false);
-            list.appendChild(item);
-        });
+        const grouped = groupBoxesByZone(lockBoxes);
+
+        for (const zoneName in grouped) {
+            const zoneHeader = document.createElement('div');
+            zoneHeader.className = 'zone-header';
+            zoneHeader.innerHTML = `<span>📍 ${zoneName}</span> <span>(${grouped[zoneName].length})</span>`;
+            list.appendChild(zoneHeader);
+
+            grouped[zoneName].forEach(b => {
+                const item = document.createElement('div');
+                item.innerHTML = renderBoxTemplate(b, false);
+                list.appendChild(item);
+            });
+        }
     }
 
     function renderTasks() {
@@ -832,11 +900,20 @@
         alertBadge.style.display = 'inline';
         alertBadge.innerText = missingKeysBoxes.length;
 
-        missingKeysBoxes.forEach(b => {
-            const item = document.createElement('div');
-            item.innerHTML = renderBoxTemplate(b, true);
-            taskList.appendChild(item);
-        });
+        const grouped = groupBoxesByZone(missingKeysBoxes);
+
+        for (const zoneName in grouped) {
+            const zoneHeader = document.createElement('div');
+            zoneHeader.className = 'zone-header';
+            zoneHeader.innerHTML = `<span>📍 ${zoneName}</span> <span>(${grouped[zoneName].length})</span>`;
+            taskList.appendChild(zoneHeader);
+
+            grouped[zoneName].forEach(b => {
+                const item = document.createElement('div');
+                item.innerHTML = renderBoxTemplate(b, true);
+                taskList.appendChild(item);
+            });
+        }
     }
 
     renderBoxes();
