@@ -66,7 +66,6 @@
             overflow-x: hidden;
         }
 
-        /* DESKTOP SIDEBAR */
         .sidebar {
             width: 240px;
             background-color: var(--sidebar-bg);
@@ -197,7 +196,6 @@
             margin: 0 auto;
         }
 
-        /* METRIC STATS ROW */
         .stats-row {
             display: grid;
             grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
@@ -232,7 +230,6 @@
             color: var(--text);
         }
 
-        /* FORM CARDS & INPUTS */
         .card {
             background-color: var(--card-bg);
             border-radius: 8px;
@@ -312,7 +309,6 @@
             display: inline-block;
         }
 
-        /* STATUS BADGES */
         .status-badge {
             display: inline-flex;
             align-items: center;
@@ -340,7 +336,6 @@
             justify-content: space-between;
         }
 
-        /* LOCKBOX CARD ITEM */
         .lockbox-item {
             background-color: var(--parent-header-bg);
             border: 1px solid var(--parent-border);
@@ -396,7 +391,7 @@
         }
 
         .code-display-box {
-            background-color: rgba(0, 0, 0, 0.2);
+            background-color: rgba(0, 0, 0, 0.25);
             border: 1px solid var(--border);
             padding: 8px 10px;
             border-radius: 6px;
@@ -553,7 +548,6 @@
             border-radius: 6px;
         }
 
-        /* CRITICAL MOBILE FIXES */
         @media (max-width: 768px) {
             body {
                 flex-direction: column;
@@ -687,9 +681,6 @@
                     <input type="text" id="boxName" placeholder="Full Address (e.g. 35 Lincoln Rd)">
                     <button class="icon-btn" style="width: 44px; height: 38px; margin-top: 4px;" onclick="findAddress()">🔍</button>
                 </div>
-
-                <label>Main LockBox Code:</label>
-                <input type="text" id="initialCode" placeholder="e.g. 4589 or C1234X">
 
                 <div class="checkbox-group">
                     <input type="checkbox" id="isHmo" onchange="toggleHmoOptions()">
@@ -830,7 +821,6 @@
 
     async function addLockBox() {
         const name = document.getElementById('boxName').value.trim();
-        const code = document.getElementById('initialCode').value.trim() || 'Not Set';
         const photoInput = document.getElementById('boxPhoto');
         const videoInput = document.getElementById('boxVideo');
 
@@ -856,11 +846,11 @@
                 units.push({
                     id: Date.now() + i,
                     unitName: `${prefix} ${i}`,
-                    code: code,
+                    code: 'Not Set',
                     status: 'gray',
                     lastAction: 'Pending initial setup.',
                     actionTime: new Date().toLocaleString(),
-                    history: [{ action: `Unit created. Code: ${code}`, time: new Date().toLocaleString() }]
+                    history: [{ action: `Unit created.`, time: new Date().toLocaleString() }]
                 });
             }
         }
@@ -872,7 +862,7 @@
             id: Date.now(),
             name: name,
             zone: zone,
-            code: code,
+            code: 'Not Set',
             isHmo: isHmo,
             units: units,
             photos: photoDataArray,
@@ -880,11 +870,10 @@
             status: 'gray',
             lastAction: 'Property Created',
             actionTime: now,
-            history: [{ action: `Main LockBox created. Code set to: ${code}`, time: now }]
+            history: [{ action: `Main LockBox created.`, time: now }]
         });
 
         document.getElementById('boxName').value = '';
-        document.getElementById('initialCode').value = '';
         document.getElementById('boxPhoto').value = '';
         document.getElementById('boxVideo').value = '';
         document.getElementById('isHmo').checked = false;
@@ -1081,8 +1070,9 @@
             <div class="code-display-box">
                 <div>🔑 Code: <span class="code-num">${targetObj.code || 'Not Set'}</span></div>
                 <div style="display:flex; gap:4px; align-items:center;">
-                    <input type="text" id="${keyPrefix}code-input-${b.id}" placeholder="New code" style="width: 90px; padding: 4px 6px; margin: 0; font-size: 11px;">
+                    <input type="text" id="${keyPrefix}code-input-${b.id}" placeholder="New code" style="width: 80px; padding: 4px 6px; margin: 0; font-size: 11px;">
                     <button class="btn-small" style="padding: 4px 8px;" onclick="updateCode(${b.id}, '${prefix}', ${unitId})">Set Code</button>
+                    <button class="history-btn" onclick="openHistory(${b.id}, ${unitId})" title="View History">📜</button>
                 </div>
             </div>
 
@@ -1091,7 +1081,6 @@
                     <strong>Last Action:</strong> ${targetObj.lastAction || 'Created'}<br>
                     ${targetObj.actionTime ? `<span>🕒 ${targetObj.actionTime}</span>` : ''}
                 </div>
-                <button class="history-btn" onclick="openHistory(${b.id}, ${unitId})">📜 History</button>
             </div>
 
             <details class="action-block" style="border-left: 3px solid var(--red);">
@@ -1211,7 +1200,7 @@
                 
                 <div class="media-gallery">
                     ${(b.photos || []).map(p => `<img src="${p}" class="media-thumb" onclick="openMediaViewer('${p}', 'image')">`).join('')}
-                    ${(b.videos || []).map(v => `<video src="${v}" class="media-thumb" onclick="openMediaViewer('${v}', 'video')"></video>`).join('')}
+                    ${(b.videos || []).map(v => `<video src="${v}" class="media-thumb" onclick="openMediaViewer('${v}', 'video')">`).join('')}
                 </div>
 
                 <div style="display:flex; gap:6px; margin-bottom:8px;">
