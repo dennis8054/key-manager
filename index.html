@@ -2,7 +2,7 @@
 <html lang="en">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
     <title>Haven Rise Shelter - LockBox Key Manager</title>
     <style>
         :root {
@@ -21,7 +21,6 @@
             --green: #10b981;
             --red: #ef4444;
             --orange: #f59e0b;
-            --purple: #8b5cf6;
             --primary: var(--haven-pink);
             --primary-hover: var(--haven-pink-dark);
             --sidebar-bg: #0d1217;
@@ -51,17 +50,22 @@
             --unit-border: var(--haven-blue);
         }
 
+        * {
+            box-sizing: border-box;
+        }
+
         body {
-            font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+            font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
             background-color: var(--bg);
             color: var(--text);
             margin: 0;
             padding: 0;
             display: flex;
             min-height: 100vh;
+            flex-direction: row;
         }
 
-        /* SIDEBAR STYLES */
+        /* RESPONSIVE LAYOUT */
         .sidebar {
             width: 240px;
             background-color: var(--sidebar-bg);
@@ -71,10 +75,9 @@
             position: sticky;
             top: 0;
             height: 100vh;
-            box-sizing: border-box;
             z-index: 100;
             overflow-y: auto;
-            color: #94a3b8;
+            flex-shrink: 0;
         }
 
         .sidebar-brand {
@@ -155,12 +158,11 @@
             border-radius: 10px;
         }
 
-        /* APP WRAPPER & MAIN CONTAINER */
         .app-wrapper {
             flex: 1;
             display: flex;
             flex-direction: column;
-            overflow-x: hidden;
+            min-width: 0;
         }
 
         .top-navbar {
@@ -170,7 +172,7 @@
             display: flex;
             justify-content: space-between;
             align-items: center;
-            padding: 0 24px;
+            padding: 0 20px;
         }
 
         .page-title {
@@ -187,29 +189,25 @@
         }
 
         .container {
-            padding: 20px 24px;
+            padding: 20px;
             width: 100%;
             max-width: 1400px;
-            box-sizing: border-box;
             margin: 0 auto;
         }
 
         /* METRIC STATS ROW */
         .stats-row {
-            display: flex;
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
             gap: 12px;
             margin-bottom: 20px;
-            overflow-x: auto;
-            padding-bottom: 4px;
         }
 
         .stat-card {
             background-color: var(--card-bg);
             border: 1px solid var(--border);
-            border-radius: 6px;
+            border-radius: 8px;
             padding: 12px 16px;
-            min-width: 140px;
-            flex: 1;
         }
 
         .stat-card.active {
@@ -227,7 +225,7 @@
         }
 
         .stat-value {
-            font-size: 20px;
+            font-size: 22px;
             font-weight: 700;
             color: var(--text);
         }
@@ -255,14 +253,13 @@
 
         input[type="text"], input[type="number"], select {
             width: 100%;
-            padding: 8px 12px;
+            padding: 9px 12px;
             margin-top: 4px;
             margin-bottom: 10px;
             border-radius: 6px;
             border: 1px solid var(--border);
             background-color: var(--input-bg);
             color: var(--text);
-            box-sizing: border-box;
             font-size: 13px;
             outline: none;
         }
@@ -280,7 +277,7 @@
         }
 
         button {
-            padding: 8px 14px;
+            padding: 9px 14px;
             border-radius: 6px;
             border: none;
             font-weight: 600;
@@ -291,15 +288,13 @@
             transition: opacity 0.2s;
         }
 
-        button:hover {
-            opacity: 0.9;
-        }
+        button:hover { opacity: 0.9; }
 
         .icon-btn {
             background: var(--card-bg);
             border: 1px solid var(--border);
             color: var(--text);
-            padding: 6px 10px;
+            padding: 6px 12px;
             border-radius: 6px;
             cursor: pointer;
             font-size: 13px;
@@ -310,7 +305,7 @@
 
         .btn-small {
             width: auto;
-            padding: 4px 8px;
+            padding: 5px 10px;
             font-size: 11px;
             display: inline-block;
         }
@@ -319,7 +314,7 @@
         .status-badge {
             display: inline-flex;
             align-items: center;
-            padding: 3px 10px;
+            padding: 4px 10px;
             border-radius: 12px;
             font-weight: 600;
             font-size: 11px;
@@ -357,6 +352,8 @@
             justify-content: space-between;
             align-items: center;
             margin-bottom: 8px;
+            flex-wrap: wrap;
+            gap: 6px;
         }
 
         .lockbox-header h4 {
@@ -385,9 +382,7 @@
             border-left: 2px solid var(--unit-border);
         }
 
-        .hmo-units-wrapper.open {
-            display: block;
-        }
+        .hmo-units-wrapper.open { display: block; }
 
         .hmo-unit-box {
             background-color: var(--unit-bg);
@@ -408,6 +403,8 @@
             display: flex;
             justify-content: space-between;
             align-items: center;
+            flex-wrap: wrap;
+            gap: 6px;
         }
 
         .code-display-box span.code-num {
@@ -442,10 +439,7 @@
             font-size: 12px;
         }
 
-        .checkbox-group input {
-            width: auto;
-            margin: 0;
-        }
+        .checkbox-group input { width: auto; margin: 0; }
 
         .log-info {
             font-size: 11px;
@@ -484,7 +478,6 @@
             font-size: 12px;
             font-weight: 600;
             cursor: pointer;
-            user-select: none;
             outline: none;
             display: flex;
             align-items: center;
@@ -499,15 +492,9 @@
             transition: transform 0.2s;
         }
 
-        details.action-block[open] summary::after {
-            transform: rotate(180deg);
-        }
+        details.action-block[open] summary::after { transform: rotate(180deg); }
 
-        .action-content {
-            padding: 10px;
-            border-top: 1px solid var(--border);
-        }
-
+        .action-content { padding: 10px; border-top: 1px solid var(--border); }
         .note-input { display: none; }
         .page-view { display: none; }
         .page-view.active { display: block; }
@@ -516,12 +503,11 @@
             display: none;
             position: fixed;
             top: 0; left: 0; width: 100%; height: 100%;
-            background: rgba(0,0,0,0.8);
+            background: rgba(0,0,0,0.85);
             justify-content: center;
             align-items: center;
             z-index: 1000;
             padding: 15px;
-            box-sizing: border-box;
         }
 
         .modal-content {
@@ -564,6 +550,49 @@
             max-height: 70vh;
             border-radius: 6px;
         }
+
+        /* MOBILE OPTIMIZATIONS */
+        @media (max-width: 768px) {
+            body { flex-direction: column; }
+
+            .sidebar {
+                width: 100%;
+                height: auto;
+                position: relative;
+                border-right: none;
+                border-bottom: 1px solid var(--border);
+            }
+
+            .sidebar-section { display: none; }
+
+            .sidebar-brand { padding: 10px 15px; }
+
+            .nav-item {
+                display: inline-flex;
+                width: auto;
+                margin: 4px 2px;
+                padding: 6px 12px;
+                font-size: 12px;
+            }
+
+            .sidebar-nav-container {
+                display: flex;
+                overflow-x: auto;
+                padding: 4px 10px;
+                white-space: nowrap;
+            }
+
+            .container { padding: 12px; }
+
+            .stats-row {
+                grid-template-columns: repeat(3, 1fr);
+                gap: 6px;
+            }
+
+            .stat-card { padding: 8px 10px; }
+            .stat-value { font-size: 16px; }
+            .stat-label { font-size: 10px; }
+        }
     </style>
 </head>
 <body>
@@ -577,23 +606,15 @@
         </div>
     </div>
 
-    <div class="sidebar-section">Dashboard</div>
-    <button id="navHome" class="nav-item active" onclick="switchTab('home')">
-        <span>🏠</span> Properties
-    </button>
-    <button id="navTasks" class="nav-item" onclick="switchTab('tasks')">
-        <span>⚠️</span> Action Required
-        <span id="alertCount" class="badge-alert" style="display:none;">0</span>
-    </button>
-
-    <div class="sidebar-section">Management</div>
-    <a class="nav-item"><span>🏢</span> Properties</a>
-    <a class="nav-item"><span>🔑</span> LockBoxes</a>
-    <a class="nav-item"><span>📋</span> Inspections</a>
-
-    <div class="sidebar-section">Operations</div>
-    <a class="nav-item"><span>🛠️</span> Maintenance</a>
-    <a class="nav-item"><span>🧹</span> Cleaning</a>
+    <div class="sidebar-nav-container">
+        <button id="navHome" class="nav-item active" onclick="switchTab('home')">
+            <span>🏠</span> Properties
+        </button>
+        <button id="navTasks" class="nav-item" onclick="switchTab('tasks')">
+            <span>⚠️</span> Action Required
+            <span id="alertCount" class="badge-alert" style="display:none;">0</span>
+        </button>
+    </div>
 </div>
 
 <div class="app-wrapper">
@@ -616,7 +637,7 @@
                 <div class="stat-value" id="statKeysMissing">0</div>
             </div>
             <div class="stat-card">
-                <div class="stat-label"><span>⚪</span> Pending Setup</div>
+                <div class="stat-label"><span>⚪</span> Pending</div>
                 <div class="stat-value" id="statPending">0</div>
             </div>
         </div>
@@ -626,7 +647,7 @@
                 <h3>+ Add New Property LockBox</h3>
                 <div class="address-row">
                     <input type="text" id="boxName" placeholder="Full Address (e.g. 35 Lincoln Rd, Erith DA8 2DX)">
-                    <button class="icon-btn" style="width: 40px; height: 35px; margin-top: 4px;" onclick="findAddress()">🔍</button>
+                    <button class="icon-btn" style="width: 42px; height: 38px; margin-top: 4px;" onclick="findAddress()">🔍</button>
                 </div>
 
                 <label>Main LockBox Code:</label>
