@@ -63,9 +63,10 @@
             display: flex;
             min-height: 100vh;
             flex-direction: row;
+            overflow-x: hidden;
         }
 
-        /* RESPONSIVE LAYOUT */
+        /* DESKTOP SIDEBAR */
         .sidebar {
             width: 240px;
             background-color: var(--sidebar-bg);
@@ -121,7 +122,7 @@
             display: flex;
             align-items: center;
             gap: 10px;
-            padding: 9px 16px;
+            padding: 10px 16px;
             color: #94a3b8;
             text-decoration: none;
             font-size: 13px;
@@ -163,6 +164,7 @@
             display: flex;
             flex-direction: column;
             min-width: 0;
+            width: 100%;
         }
 
         .top-navbar {
@@ -198,7 +200,7 @@
         /* METRIC STATS ROW */
         .stats-row {
             display: grid;
-            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+            grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
             gap: 12px;
             margin-bottom: 20px;
         }
@@ -253,7 +255,7 @@
 
         input[type="text"], input[type="number"], select {
             width: 100%;
-            padding: 9px 12px;
+            padding: 10px 12px;
             margin-top: 4px;
             margin-bottom: 10px;
             border-radius: 6px;
@@ -277,7 +279,7 @@
         }
 
         button {
-            padding: 9px 14px;
+            padding: 10px 14px;
             border-radius: 6px;
             border: none;
             font-weight: 600;
@@ -305,7 +307,7 @@
 
         .btn-small {
             width: auto;
-            padding: 5px 10px;
+            padding: 6px 10px;
             font-size: 11px;
             display: inline-block;
         }
@@ -551,9 +553,11 @@
             border-radius: 6px;
         }
 
-        /* MOBILE OPTIMIZATIONS */
+        /* CRITICAL MOBILE FIXES */
         @media (max-width: 768px) {
-            body { flex-direction: column; }
+            body {
+                flex-direction: column;
+            }
 
             .sidebar {
                 width: 100%;
@@ -563,35 +567,69 @@
                 border-bottom: 1px solid var(--border);
             }
 
-            .sidebar-section { display: none; }
+            .sidebar-section {
+                display: none;
+            }
 
-            .sidebar-brand { padding: 10px 15px; }
-
-            .nav-item {
-                display: inline-flex;
-                width: auto;
-                margin: 4px 2px;
-                padding: 6px 12px;
-                font-size: 12px;
+            .sidebar-brand {
+                padding: 10px 15px;
             }
 
             .sidebar-nav-container {
                 display: flex;
                 overflow-x: auto;
-                padding: 4px 10px;
-                white-space: nowrap;
+                padding: 6px 10px;
+                gap: 6px;
+                background-color: var(--sidebar-bg);
             }
 
-            .container { padding: 12px; }
+            .nav-item {
+                display: inline-flex;
+                width: auto;
+                margin: 0;
+                padding: 8px 14px;
+                font-size: 12px;
+                white-space: nowrap;
+                flex-shrink: 0;
+            }
+
+            .badge-alert {
+                position: static;
+                margin-left: 6px;
+            }
+
+            .container {
+                padding: 12px;
+                max-width: 100%;
+            }
 
             .stats-row {
                 grid-template-columns: repeat(3, 1fr);
-                gap: 6px;
+                gap: 8px;
             }
 
-            .stat-card { padding: 8px 10px; }
-            .stat-value { font-size: 16px; }
-            .stat-label { font-size: 10px; }
+            .stat-card {
+                padding: 10px 8px;
+                text-align: center;
+            }
+
+            .stat-value {
+                font-size: 18px;
+            }
+
+            .stat-label {
+                font-size: 10px;
+                justify-content: center;
+            }
+
+            .top-navbar {
+                padding: 0 12px;
+                height: 48px;
+            }
+
+            .page-title {
+                font-size: 15px;
+            }
         }
     </style>
 </head>
@@ -629,11 +667,11 @@
 
         <div class="stats-row">
             <div class="stat-card active">
-                <div class="stat-label"><span>🟢</span> Keys Inside</div>
+                <div class="stat-label"><span>🟢</span> Inside</div>
                 <div class="stat-value" id="statKeysInside">0</div>
             </div>
             <div class="stat-card">
-                <div class="stat-label"><span>🔴</span> Keys Missing</div>
+                <div class="stat-label"><span>🔴</span> Missing</div>
                 <div class="stat-value" id="statKeysMissing">0</div>
             </div>
             <div class="stat-card">
@@ -646,8 +684,8 @@
             <div class="card">
                 <h3>+ Add New Property LockBox</h3>
                 <div class="address-row">
-                    <input type="text" id="boxName" placeholder="Full Address (e.g. 35 Lincoln Rd, Erith DA8 2DX)">
-                    <button class="icon-btn" style="width: 42px; height: 38px; margin-top: 4px;" onclick="findAddress()">🔍</button>
+                    <input type="text" id="boxName" placeholder="Full Address (e.g. 35 Lincoln Rd)">
+                    <button class="icon-btn" style="width: 44px; height: 38px; margin-top: 4px;" onclick="findAddress()">🔍</button>
                 </div>
 
                 <label>Main LockBox Code:</label>
