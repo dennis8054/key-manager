@@ -765,7 +765,7 @@
             let target = box;
             if (unitId) {
                 target = box.units.find(u => u.id === unitId);
-                // Ensure parent flat accordion remains open
+                // Keep accordion open
                 openAccordions.add(`${id}`);
                 openAccordions.add(`task-${id}`);
             }
@@ -797,7 +797,6 @@
         let target = box;
         if (unitId) {
             target = box.units.find(u => u.id === unitId);
-            // Ensure accordion stays open
             openAccordions.add(`${prefix}${id}`);
         }
 
@@ -840,16 +839,24 @@
             fullReason = `Other: ${customNote}`;
         }
 
+        // Check if options exist for parent HMO key types
+        const targetFlatSelect = document.getElementById(`${targetKey}target-flat-give-${id}`);
+        const targetKeyTypeSelect = document.getElementById(`${targetKey}key-type-give-${id}`);
+
+        let extraDetail = '';
+        if (targetFlatSelect && targetKeyTypeSelect) {
+            extraDetail = ` [For: ${targetFlatSelect.value} | Key Type: ${targetKeyTypeSelect.value}]`;
+        }
+
         const now = new Date().toLocaleString();
         const box = lockBoxes.find(b => b.id === id);
         let target = box;
         if (unitId) {
             target = box.units.find(u => u.id === unitId);
-            // Ensure accordion stays open
             openAccordions.add(`${prefix}${id}`);
         }
 
-        const logEntry = `Keys removed by ${staff} [Reason: ${fullReason}] (Code used: ${target.code || 'N/A'})`;
+        const logEntry = `Keys removed by ${staff}${extraDetail} [Reason: ${fullReason}] (Code used: ${target.code || 'N/A'})`;
         target.status = 'red';
         target.lastAction = logEntry;
         target.actionTime = now;
@@ -875,16 +882,24 @@
             fullReason = `Other: ${customNote}`;
         }
 
+        // Check if options exist for parent HMO key types
+        const targetFlatSelect = document.getElementById(`${targetKey}target-flat-add-${id}`);
+        const targetKeyTypeSelect = document.getElementById(`${targetKey}key-type-add-${id}`);
+
+        let extraDetail = '';
+        if (targetFlatSelect && targetKeyTypeSelect) {
+            extraDetail = ` [For: ${targetFlatSelect.value} | Key Type: ${targetKeyTypeSelect.value}]`;
+        }
+
         const now = new Date().toLocaleString();
         const box = lockBoxes.find(b => b.id === id);
         let target = box;
         if (unitId) {
             target = box.units.find(u => u.id === unitId);
-            // Ensure accordion stays open
             openAccordions.add(`${prefix}${id}`);
         }
 
-        const logEntry = `Keys added by ${staff} [Note: ${fullReason}] (Code set: ${target.code || 'N/A'})`;
+        const logEntry = `Keys added by ${staff}${extraDetail} [Note: ${fullReason}] (Code set: ${target.code || 'N/A'})`;
         target.status = 'green';
         target.lastAction = logEntry;
         target.actionTime = now;
@@ -954,6 +969,14 @@
     function renderSingleActionBlock(b, targetObj, isTaskPage, unitId = null) {
         const prefix = isTaskPage ? 'task-' : '';
         const keyPrefix = unitId ? `${prefix}unit-${unitId}-` : prefix;
+        const isParentHmo = b.isHmo && !unitId;
+
+        // Build flat dropdown options if this is the parent HMO lockbox
+        let flatOptionsHtml = '';
+        if (isParentHmo && b.units) {
+            flatOptionsHtml = `<option value="Whole Building / General">For: Whole Building / General</option>` +
+                b.units.map(u => `<option value="${u.unitName}">For: ${u.unitName}</option>`).join('');
+        }
 
         return `
             <!-- Code Management Box -->
@@ -977,6 +1000,20 @@
             <div class="action-block" style="border-left: 3px solid var(--red);">
                 <div class="section-title">🔑 Give Keys / Remove Keys</div>
                 
+                ${isParentHmo ? `
+                <!-- Parent HMO Specific Dropdowns -->
+                <select id="${keyPrefix}target-flat-give-${b.id}">
+                    ${flatOptionsHtml}
+                </select>
+
+                <select id="${keyPrefix}key-type-give-${b.id}">
+                    <option value="Flat Key">Key Type: Flat Key</option>
+                    <option value="Main Door Key">Key Type: Main Door Key</option>
+                    <option value="Both Keys (Flat + Main Door)">Key Type: Both Keys (Flat + Main Door)</option>
+                    <option value="Master Code / LockBox Code">Key Type: LockBox Code Shared</option>
+                </select>
+                ` : ''}
+
                 <select id="${keyPrefix}staff-give-${b.id}">
                     <option value="Alex">By: Alex</option>
                     <option value="Denis">By: Denis</option>
@@ -985,6 +1022,7 @@
                 <select id="${keyPrefix}reason-give-${b.id}" onchange="toggleReasonNote(${b.id}, 'give', '${keyPrefix}')">
                     <option value="Tenant Moved In">Reason: Tenant Moved In</option>
                     <option value="Tenant Lost Keys (Code Given)">Reason: Tenant Lost Keys (Access Code Given)</option>
+                    <option value="Flat LockBox Empty - Supplied from Parent">Reason: Flat LockBox Empty (Supplied from Main LockBox)</option>
                     <option value="Other">Reason: Other (Type Below)</option>
                 </select>
 
@@ -1002,6 +1040,19 @@
             <div class="action-block" style="border-left: 3px solid var(--green);">
                 <div class="section-title">📥 Restock / Add Keys</div>
                 
+                ${isParentHmo ? `
+                <!-- Parent HMO Specific Dropdowns for Restock -->
+                <select id="${keyPrefix}target-flat-add-${b.id}">
+                    ${flatOptionsHtml}
+                </select>
+
+                <select id="${keyPrefix}key-type-add-${b.id}">
+                    <option value="Flat Key">Key Type: Flat Key</option>
+                    <option value="Main Door Key">Key Type: Main Door Key</option>
+                    <option value="Both Keys (Flat + Main Door)">Key Type: Both Keys (Flat + Main Door)</option>
+                </select>
+                ` : ''}
+
                 <select id="${keyPrefix}staff-add-${b.id}">
                     <option value="Alex">By: Alex</option>
                     <option value="Denis">By: Denis</option>
@@ -1089,7 +1140,7 @@
         return `
             <div class="lockbox-item">
                 <div class="lockbox-header">
-                    <h4>🏢 ${b.name} ${b.isHmo ? '<span style="font-size:11px; color:var(--text-muted);">(Main Building Lockbox)</span>' : ''}</h4>
+                    <h4>🏢 ${b.name} ${b.isHmo ? '<span style="font-size:11px; color:var(--text-muted);">(HMO Main Building)</span>' : ''}</h4>
                     <span class="status-badge bg-${b.status}">${statusLabel}</span>
                 </div>
                 
@@ -1104,6 +1155,7 @@
                     <button class="btn-small" style="background:var(--section-bg); color:var(--text); border:1px solid var(--border);" onclick="addMoreMedia(${b.id}, 'video')">+ Video</button>
                 </div>
 
+                <!-- Always render parent code, history, and key actions -->
                 ${showParentBlock ? renderSingleActionBlock(b, b, isTaskPage, null) : ''}
 
                 <!-- Collapsible HMO Units -->
