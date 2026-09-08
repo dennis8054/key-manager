@@ -16,6 +16,19 @@
             --green: #28a745;
             --red: #dc3545;
             --primary: #0d6efd;
+            --sidebar-bg: #181818;
+            --input-bg: #2a2a2a;
+        }
+
+        body.light-mode {
+            --bg: #f4f6f9;
+            --card-bg: #ffffff;
+            --section-bg: #f8f9fa;
+            --text: #212529;
+            --text-muted: #6c757d;
+            --border: #dee2e6;
+            --sidebar-bg: #e9ecef;
+            --input-bg: #ffffff;
         }
 
         body {
@@ -23,21 +36,111 @@
             background-color: var(--bg);
             color: var(--text);
             margin: 0;
-            padding: 10px;
+            padding: 0;
             display: flex;
+            min-height: 100vh;
+        }
+
+        /* Sidebar Styling */
+        .sidebar {
+            width: 60px;
+            background-color: var(--sidebar-bg);
+            border-right: 1px solid var(--border);
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            padding-top: 15px;
+            gap: 20px;
+            position: sticky;
+            top: 0;
+            height: 100vh;
+            box-sizing: border-box;
+            z-index: 100;
+        }
+
+        .nav-icon {
+            width: 42px;
+            height: 42px;
+            border-radius: 10px;
+            display: flex;
+            align-items: center;
             justify-content: center;
+            font-size: 20px;
+            cursor: pointer;
+            background: transparent;
+            color: var(--text);
+            border: none;
+            position: relative;
+            transition: background 0.2s;
+        }
+
+        .nav-icon.active {
+            background-color: var(--primary);
+            color: #fff;
+        }
+
+        .badge-alert {
+            position: absolute;
+            top: 2px;
+            right: 2px;
+            background: var(--red);
+            color: #fff;
+            font-size: 10px;
+            font-weight: bold;
+            padding: 2px 5px;
+            border-radius: 10px;
+        }
+
+        /* Main App Area */
+        .app-wrapper {
+            flex: 1;
+            padding: 15px;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            transition: max-width 0.3s;
         }
 
         .container {
             width: 100%;
-            max-width: 480px;
+            max-width: 480px; /* Phone view default */
+            transition: max-width 0.3s;
         }
 
-        h1 {
-            text-align: center;
+        body.pc-mode .container {
+            max-width: 900px; /* PC layout view */
+        }
+
+        /* Header Toolbar */
+        .top-toolbar {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            width: 100%;
+            margin-bottom: 15px;
+        }
+
+        .top-toolbar h1 {
             font-size: 18px;
-            margin: 10px 0 15px 0;
-            letter-spacing: 0.5px;
+            margin: 0;
+        }
+
+        .tool-btns {
+            display: flex;
+            gap: 8px;
+        }
+
+        .icon-btn {
+            background: var(--card-bg);
+            border: 1px solid var(--border);
+            color: var(--text);
+            padding: 6px 10px;
+            border-radius: 6px;
+            cursor: pointer;
+            font-size: 14px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
         }
 
         .card {
@@ -51,7 +154,12 @@
         .card h3 {
             font-size: 14px;
             margin: 0 0 10px 0;
-            color: #fff;
+            color: var(--text);
+        }
+
+        .address-row {
+            display: flex;
+            gap: 6px;
         }
 
         input[type="text"], select {
@@ -61,8 +169,8 @@
             margin-bottom: 8px;
             border-radius: 6px;
             border: 1px solid var(--border);
-            background-color: #2a2a2a;
-            color: #fff;
+            background-color: var(--input-bg);
+            color: var(--text);
             box-sizing: border-box;
             font-size: 13px;
         }
@@ -129,7 +237,7 @@
         .lockbox-header h4 {
             margin: 0;
             font-size: 15px;
-            color: #fff;
+            color: var(--text);
         }
 
         .media-gallery {
@@ -165,7 +273,7 @@
         .log-info {
             font-size: 11px;
             color: var(--text-muted);
-            background: #181818;
+            background: var(--section-bg);
             padding: 6px 8px;
             border-radius: 4px;
             margin: 6px 0;
@@ -176,9 +284,9 @@
         }
 
         .history-btn {
-            background: #333;
-            color: #fff;
-            border: 1px solid #555;
+            background: var(--card-bg);
+            color: var(--text);
+            border: 1px solid var(--border);
             border-radius: 4px;
             padding: 3px 6px;
             font-size: 11px;
@@ -192,21 +300,29 @@
             padding: 8px 10px;
             border-radius: 6px;
             margin-top: 8px;
-            border: 1px solid #333;
+            border: 1px solid var(--border);
         }
 
         .section-title {
             font-size: 12px;
             font-weight: 600;
             margin-bottom: 6px;
-            color: #fff;
+            color: var(--text);
         }
 
         .note-input {
             display: none;
         }
 
-        /* Modal / Overlay Style */
+        .page-view {
+            display: none;
+        }
+
+        .page-view.active {
+            display: block;
+        }
+
+        /* Modal Overlay */
         .modal-overlay {
             display: none;
             position: fixed;
@@ -242,7 +358,7 @@
         .modal-header h3 {
             margin: 0;
             font-size: 15px;
-            color: #fff;
+            color: var(--text);
         }
 
         .close-btn {
@@ -257,7 +373,7 @@
 
         .history-list-item {
             font-size: 11px;
-            border-bottom: 1px solid #2a2a2a;
+            border-bottom: 1px solid var(--border);
             padding: 6px 0;
         }
 
@@ -274,27 +390,65 @@
 </head>
 <body>
 
-<div class="container">
-    <h1>🏠 LockBox Key Manager</h1>
+<!-- Left Navigation Sidebar -->
+<div class="sidebar">
+    <button id="navHome" class="nav-icon active" onclick="switchTab('home')" title="Main Properties">🏠</button>
+    <button id="navTasks" class="nav-icon" onclick="switchTab('tasks')" title="Action Required / Missing Keys">
+        ⚠️
+        <span id="alertCount" class="badge-alert" style="display:none;">0</span>
+    </button>
+</div>
 
-    <!-- Add Lockbox Form -->
-    <div class="card">
-        <h3>+ Add New Property LockBox</h3>
-        <input type="text" id="boxName" placeholder="Property Address / Name (e.g., Flat 1)">
+<!-- Main Content Area -->
+<div class="app-wrapper">
+    <div class="container">
         
-        <label>Add Photos:</label>
-        <input type="file" id="boxPhoto" accept="image/*" multiple>
-        
-        <label>Add Video (Upload or Record):</label>
-        <input type="file" id="boxVideo" accept="video/*" capture="environment">
+        <!-- Header Toolbar -->
+        <div class="top-toolbar">
+            <h1 id="pageHeading">🏠 LockBox Manager</h1>
+            <div class="tool-btns">
+                <button class="icon-btn" onclick="toggleTheme()" id="themeBtn" title="Toggle Light/Dark Mode">🌙</button>
+                <button class="icon-btn" onclick="toggleViewMode()" id="viewModeBtn" title="Toggle PC/Phone Layout">📱</button>
+            </div>
+        </div>
 
-        <button onclick="addLockBox()">Save Property</button>
-    </div>
+        <!-- PAGE 1: MAIN INVENTORY -->
+        <div id="pageHome" class="page-view active">
+            <!-- Add Lockbox Form -->
+            <div class="card">
+                <h3>+ Add New Property LockBox</h3>
+                <div class="address-row">
+                    <input type="text" id="boxName" placeholder="Property Address / Location">
+                    <button class="icon-btn" style="width: auto; height: 35px; margin-top: 4px;" onclick="findAddress()" title="Find / Map Address">🔍</button>
+                </div>
+                
+                <label>Add Photos:</label>
+                <input type="file" id="boxPhoto" accept="image/*" multiple>
+                
+                <label>Add Video (Upload or Record):</label>
+                <input type="file" id="boxVideo" accept="video/*" capture="environment">
 
-    <!-- LockBox Inventory List -->
-    <div class="card">
-        <h3>Property Inventory</h3>
-        <div id="boxList"></div>
+                <button onclick="addLockBox()" style="margin-top: 8px;">Save Property</button>
+            </div>
+
+            <!-- Inventory List -->
+            <div class="card">
+                <h3>Property Inventory</h3>
+                <div id="boxList"></div>
+            </div>
+        </div>
+
+        <!-- PAGE 2: ACTION REQUIRED (MISSING KEYS / JOBS) -->
+        <div id="pageTasks" class="page-view">
+            <div class="card" style="border-left: 4px solid var(--red);">
+                <h3>⚠️ Action Required: Restock / Refill Needed</h3>
+                <p style="font-size: 12px; color: var(--text-muted); margin-bottom: 12px;">
+                    These properties have missing keys or were recently given to tenants. Use this page to refill keys, record updates, and attach photos or videos.
+                </p>
+                <div id="taskList"></div>
+            </div>
+        </div>
+
     </div>
 </div>
 
@@ -316,10 +470,53 @@
 
 <script>
     let lockBoxes = JSON.parse(localStorage.getItem('myLockBoxes')) || [];
+    let isDarkMode = localStorage.getItem('isDarkMode') !== 'false';
+    let isPcMode = localStorage.getItem('isPcMode') === 'true';
+
+    // Apply Saved Preferences
+    if (!isDarkMode) document.body.classList.add('light-mode');
+    if (isPcMode) document.body.classList.add('pc-mode');
+    updateToolbarIcons();
 
     function saveAndRender() {
         localStorage.setItem('myLockBoxes', JSON.stringify(lockBoxes));
         renderBoxes();
+        renderTasks();
+    }
+
+    function toggleTheme() {
+        isDarkMode = !isDarkMode;
+        localStorage.setItem('isDarkMode', isDarkMode);
+        document.body.classList.toggle('light-mode', !isDarkMode);
+        updateToolbarIcons();
+    }
+
+    function toggleViewMode() {
+        isPcMode = !isPcMode;
+        localStorage.setItem('isPcMode', isPcMode);
+        document.body.classList.toggle('pc-mode', isPcMode);
+        updateToolbarIcons();
+    }
+
+    function updateToolbarIcons() {
+        document.getElementById('themeBtn').innerText = isDarkMode ? '☀️' : '🌙';
+        document.getElementById('viewModeBtn').innerText = isPcMode ? '💻' : '📱';
+    }
+
+    function switchTab(tab) {
+        document.getElementById('navHome').classList.toggle('active', tab === 'home');
+        document.getElementById('navTasks').classList.toggle('active', tab === 'tasks');
+
+        document.getElementById('pageHome').classList.toggle('active', tab === 'home');
+        document.getElementById('pageTasks').classList.toggle('active', tab === 'tasks');
+
+        document.getElementById('pageHeading').innerText = tab === 'home' ? '🏠 LockBox Manager' : '⚠️ Action Required';
+    }
+
+    function findAddress() {
+        const query = document.getElementById('boxName').value.trim();
+        if (!query) return alert('Please type an address to search!');
+        window.open(`https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(query)}`, '_blank');
     }
 
     async function addLockBox() {
@@ -332,16 +529,14 @@
         const photoDataArray = [];
         if (photoInput.files && photoInput.files.length > 0) {
             for (let file of photoInput.files) {
-                const data = await readFileAsDataURL(file);
-                photoDataArray.push(data);
+                photoDataArray.push(await readFileAsDataURL(file));
             }
         }
 
         const videoDataArray = [];
         if (videoInput.files && videoInput.files.length > 0) {
             for (let file of videoInput.files) {
-                const data = await readFileAsDataURL(file);
-                videoDataArray.push(data);
+                videoDataArray.push(await readFileAsDataURL(file));
             }
         }
 
@@ -384,14 +579,12 @@
             if (type === 'photo') {
                 if (!box.photos) box.photos = [];
                 for (let file of e.target.files) {
-                    const data = await readFileAsDataURL(file);
-                    box.photos.push(data);
+                    box.photos.push(await readFileAsDataURL(file));
                 }
             } else {
                 if (!box.videos) box.videos = [];
                 for (let file of e.target.files) {
-                    const data = await readFileAsDataURL(file);
-                    box.videos.push(data);
+                    box.videos.push(await readFileAsDataURL(file));
                 }
             }
             saveAndRender();
@@ -515,26 +708,16 @@
         }
     }
 
-    function renderBoxes() {
-        const list = document.getElementById('boxList');
-        list.innerHTML = '';
+    function renderBoxTemplate(b) {
+        let statusLabel = "Gray: Nothing Added";
+        if (b.status === 'green') statusLabel = "Green: Keys Inside";
+        if (b.status === 'red') statusLabel = "Red: Keys Missing";
 
-        if (lockBoxes.length === 0) {
-            list.innerHTML = '<p style="text-align:center; color:var(--text-muted); font-size:12px;">No properties added yet.</p>';
-            return;
-        }
+        const photos = b.photos || (b.photo ? [b.photo] : []);
+        const videos = b.videos || [];
 
-        lockBoxes.forEach(b => {
-            let statusLabel = "Gray: Nothing Added";
-            if (b.status === 'green') statusLabel = "Green: Keys Inside";
-            if (b.status === 'red') statusLabel = "Red: Keys Missing";
-
-            const photos = b.photos || (b.photo ? [b.photo] : []);
-            const videos = b.videos || [];
-
-            const item = document.createElement('div');
-            item.className = 'lockbox-item';
-            item.innerHTML = `
+        return `
+            <div class="lockbox-item">
                 <div class="lockbox-header">
                     <h4>🏠 ${b.name}</h4>
                     <span class="status-badge bg-${b.status}">${statusLabel}</span>
@@ -547,8 +730,8 @@
                 </div>
 
                 <div style="display:flex; gap:6px; margin-bottom:8px;">
-                    <button class="btn-small" style="background:#333;" onclick="addMoreMedia(${b.id}, 'photo')">+ Photo</button>
-                    <button class="btn-small" style="background:#333;" onclick="addMoreMedia(${b.id}, 'video')">+ Video</button>
+                    <button class="btn-small" style="background:var(--section-bg); color:var(--text); border:1px solid var(--border);" onclick="addMoreMedia(${b.id}, 'photo')">+ Photo</button>
+                    <button class="btn-small" style="background:var(--section-bg); color:var(--text); border:1px solid var(--border);" onclick="addMoreMedia(${b.id}, 'video')">+ Video</button>
                 </div>
 
                 <!-- Last Action Banner -->
@@ -610,13 +793,52 @@
                     <button style="background-color: var(--green);" onclick="updateKeysAdded(${b.id})">Update: Keys Inside</button>
                 </div>
 
-                <button style="background: transparent; color: #777; width: auto; font-size: 11px; margin-top: 6px; padding: 2px 4px;" onclick="deleteBox(${b.id})">🗑 Delete Property</button>
-            `;
+                <button style="background: transparent; color: var(--text-muted); width: auto; font-size: 11px; margin-top: 6px; padding: 2px 4px;" onclick="deleteBox(${b.id})">🗑 Delete Property</button>
+            </div>
+        `;
+    }
+
+    function renderBoxes() {
+        const list = document.getElementById('boxList');
+        list.innerHTML = '';
+
+        if (lockBoxes.length === 0) {
+            list.innerHTML = '<p style="text-align:center; color:var(--text-muted); font-size:12px;">No properties added yet.</p>';
+            return;
+        }
+
+        lockBoxes.forEach(b => {
+            const item = document.createElement('div');
+            item.innerHTML = renderBoxTemplate(b);
             list.appendChild(item);
         });
     }
 
+    function renderTasks() {
+        const taskList = document.getElementById('taskList');
+        const alertBadge = document.getElementById('alertCount');
+        taskList.innerHTML = '';
+
+        const missingKeysBoxes = lockBoxes.filter(b => b.status === 'red');
+
+        if (missingKeysBoxes.length === 0) {
+            alertBadge.style.display = 'none';
+            taskList.innerHTML = '<p style="text-align:center; color:var(--text-muted); font-size:12px;">🎉 All LockBoxes are currently filled and stocked!</p>';
+            return;
+        }
+
+        alertBadge.style.display = 'inline';
+        alertBadge.innerText = missingKeysBoxes.length;
+
+        missingKeysBoxes.forEach(b => {
+            const item = document.createElement('div');
+            item.innerHTML = renderBoxTemplate(b);
+            taskList.appendChild(item);
+        });
+    }
+
     renderBoxes();
+    renderTasks();
 </script>
 
 </body>
