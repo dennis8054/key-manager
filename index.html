@@ -349,7 +349,6 @@
             margin: 0;
         }
 
-        /* Collapsible Action Blocks styling */
         details.action-block {
             background-color: var(--section-bg);
             border-radius: 6px;
@@ -739,7 +738,8 @@
         const targetFlatSelect = document.getElementById(`${targetKey}target-flat-give-${id}`);
         const targetKeyTypeSelect = document.getElementById(`${targetKey}key-type-give-${id}`);
 
-        let extraDetail = (targetFlatSelect && targetKeyTypeSelect) ? ` [For: ${targetFlatSelect.value} | Key: ${targetKeyTypeSelect.value}]` : '';
+        let targetFlatValue = targetFlatSelect ? targetFlatSelect.value : null;
+        let extraDetail = (targetFlatSelect && targetKeyTypeSelect) ? ` [For: ${targetFlatValue} | Key: ${targetKeyTypeSelect.value}]` : '';
 
         const now = new Date().toLocaleString();
         const box = lockBoxes.find(b => b.id === id);
@@ -751,6 +751,19 @@
         target.actionTime = now;
         target.history = target.history || [];
         target.history.unshift({ action: logEntry, time: now });
+
+        // If keys were taken from MAIN lockbox for a SPECIFIC FLAT, update that flat to 'red' (missing) as well
+        if (!unitId && box.isHmo && targetFlatValue && targetFlatValue !== 'Whole Building') {
+            const matchedUnit = box.units.find(u => u.unitName === targetFlatValue);
+            if (matchedUnit) {
+                matchedUnit.status = 'red';
+                const unitLog = `Main LockBox Key used for ${targetFlatValue} by ${staff}. Flat LockBox needs refilling.`;
+                matchedUnit.lastAction = unitLog;
+                matchedUnit.actionTime = now;
+                matchedUnit.history = matchedUnit.history || [];
+                matchedUnit.history.unshift({ action: unitLog, time: now });
+            }
+        }
 
         saveAndRender();
     }
@@ -769,7 +782,8 @@
         const targetFlatSelect = document.getElementById(`${targetKey}target-flat-add-${id}`);
         const targetKeyTypeSelect = document.getElementById(`${targetKey}key-type-add-${id}`);
 
-        let extraDetail = (targetFlatSelect && targetKeyTypeSelect) ? ` [For: ${targetFlatSelect.value} | Key: ${targetKeyTypeSelect.value}]` : '';
+        let targetFlatValue = targetFlatSelect ? targetFlatSelect.value : null;
+        let extraDetail = (targetFlatSelect && targetKeyTypeSelect) ? ` [For: ${targetFlatValue} | Key: ${targetKeyTypeSelect.value}]` : '';
 
         const now = new Date().toLocaleString();
         const box = lockBoxes.find(b => b.id === id);
@@ -854,7 +868,6 @@
                 <button class="history-btn" onclick="openHistory(${b.id}, ${unitId})">📜 History</button>
             </div>
 
-            <!-- COLLAPSIBLE GIVE KEYS -->
             <details class="action-block" style="border-left: 3px solid var(--red);">
                 <summary>🔑 Give Keys / Remove Keys</summary>
                 <div class="action-content">
@@ -890,7 +903,6 @@
                 </div>
             </details>
 
-            <!-- COLLAPSIBLE RESTOCK KEYS -->
             <details class="action-block" style="border-left: 3px solid var(--green);">
                 <summary>📥 Restock / Add Keys</summary>
                 <div class="action-content">
@@ -981,10 +993,7 @@
                     <button class="btn-small" style="background:var(--section-bg); color:var(--text); border:1px solid var(--border);" onclick="addMoreMedia(${b.id}, 'video')">+ Video</button>
                 </div>
 
-                <!-- MAIN HMO BUILDING LOCKBOX CONTROLS -->
                 ${renderSingleActionBlock(b, b, isTaskPage, null)}
-
-                <!-- HMO SUB-UNITS -->
                 ${hmoMarkup}
 
                 <button style="background: transparent; color: var(--text-muted); width: auto; font-size: 11px; margin-top: 6px; padding: 2px 4px;" onclick="deleteBox(${b.id})">🗑 Delete Property</button>
