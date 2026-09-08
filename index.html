@@ -537,7 +537,7 @@
             </div>
 
             <!-- Inventory Search Bar -->
-            <input type="text" id="searchFilter" onkeyup="renderBoxes()" placeholder="🔍 Search address or flat (e.g. 69 piedmont)..." style="margin-bottom: 12px;">
+            <input type="text" id="searchFilter" onkeyup="handleSearch()" placeholder="🔍 Search address or flat (e.g. 69 piedmont)..." style="margin-bottom: 12px;">
 
             <!-- Inventory List -->
             <div id="boxList"></div>
@@ -578,6 +578,9 @@
     let isDarkMode = localStorage.getItem('isDarkMode') !== 'false';
     let isPcMode = localStorage.getItem('isPcMode') === 'true';
 
+    // Track active expanded accordions so edits don't close them
+    let openAccordions = new Set();
+
     if (!isDarkMode) document.body.classList.add('light-mode');
     if (isPcMode) document.body.classList.add('pc-mode');
     updateToolbarIcons();
@@ -607,13 +610,20 @@
         document.getElementById('hmoInputs').style.display = isHmo ? 'block' : 'none';
     }
 
-    function toggleHmoAccordion(id) {
-        const wrapper = document.getElementById(`hmo-wrapper-${id}`);
-        const btn = document.getElementById(`hmo-btn-${id}`);
+    function toggleHmoAccordion(id, prefix = '') {
+        const accordionKey = `${prefix}${id}`;
+        if (openAccordions.has(accordionKey)) {
+            openAccordions.delete(accordionKey);
+        } else {
+            openAccordions.add(accordionKey);
+        }
+
+        const wrapper = document.getElementById(`hmo-wrapper-${prefix}${id}`);
+        const btn = document.getElementById(`hmo-btn-${prefix}${id}`);
         if (wrapper) {
             wrapper.classList.toggle('open');
             const isOpen = wrapper.classList.contains('open');
-            btn.innerText = isOpen ? '📂 Hide Flats / Units 🔼' : '📂 Show Flats / Units 🔽';
+            btn.innerHTML = isOpen ? '<span>📂 Hide Flats / Units 🔼</span>' : '<span>📂 Show Flats / Units 🔽</span>';
         }
     }
 
@@ -621,6 +631,11 @@
         localStorage.setItem('myLockBoxes', JSON.stringify(lockBoxes));
         renderBoxes();
         renderTasks();
+    }
+
+    function handleSearch() {
+        openAccordions.clear(); // Collapse all when typing a search filter
+        renderBoxes();
     }
 
     function toggleTheme() {
@@ -643,6 +658,8 @@
     }
 
     function switchTab(tab) {
+        openAccordions.clear(); // Collapse all accordions when changing tabs
+
         document.getElementById('navHome').classList.toggle('active', tab === 'home');
         document.getElementById('navTasks').classList.toggle('active', tab === 'tasks');
 
@@ -1001,6 +1018,10 @@
         const photos = b.photos || [];
         const videos = b.videos || [];
 
+        const accordionPrefix = isTaskPage ? 'task-' : '';
+        const accordionKey = `${accordionPrefix}${b.id}`;
+        const isAccordionOpen = isTaskPage || openAccordions.has(accordionKey);
+
         let hmoMarkup = '';
         if (b.isHmo && b.units && b.units.length > 0) {
             let unitsToDisplay = b.units;
@@ -1010,11 +1031,10 @@
 
             if (unitsToDisplay.length > 0) {
                 hmoMarkup = `
-                    <button class="hmo-toggle-btn" id="hmo-btn-${b.id}" onclick="toggleHmoAccordion(${b.id})">
-                        <span>📂 Show Flats / Units (${unitsToDisplay.length})</span>
-                        <span>🔽</span>
+                    <button class="hmo-toggle-btn" id="hmo-btn-${accordionPrefix}${b.id}" onclick="toggleHmoAccordion(${b.id}, '${accordionPrefix}')">
+                        <span>${isAccordionOpen ? '📂 Hide Flats / Units 🔼' : '📂 Show Flats / Units 🔽'}</span>
                     </button>
-                    <div class="hmo-units-wrapper ${isTaskPage ? 'open' : ''}" id="hmo-wrapper-${b.id}">
+                    <div class="hmo-units-wrapper ${isAccordionOpen ? 'open' : ''}" id="hmo-wrapper-${accordionPrefix}${b.id}">
                         ${unitsToDisplay.map(u => {
                             let unitStatusLabel = "Pending Setup (Attention Needed)";
                             if (u.status === 'green') unitStatusLabel = "Keys Inside";
