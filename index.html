@@ -20,6 +20,7 @@
             --input-bg: #2a2a2a;
             --zone-bg: #002b49;
             --zone-text: #6ea8fe;
+            --unit-bg: #22272e;
         }
 
         body.light-mode {
@@ -33,6 +34,7 @@
             --input-bg: #ffffff;
             --zone-bg: #e7f1ff;
             --zone-text: #0a58ca;
+            --unit-bg: #f1f3f5;
         }
 
         body {
@@ -166,7 +168,7 @@
             gap: 6px;
         }
 
-        input[type="text"], select {
+        input[type="text"], input[type="number"], select {
             width: 100%;
             padding: 8px 10px;
             margin-top: 4px;
@@ -261,6 +263,16 @@
             margin: 0;
             font-size: 15px;
             color: var(--text);
+        }
+
+        /* HMO Sub-units container */
+        .hmo-unit-box {
+            background-color: var(--unit-bg);
+            border-left: 3px solid var(--primary);
+            padding: 8px 10px;
+            border-radius: 6px;
+            margin-top: 8px;
+            margin-left: 10px;
         }
 
         .media-gallery {
@@ -441,22 +453,42 @@
             <div class="card">
                 <h3>+ Add New Property LockBox</h3>
                 <div class="address-row">
-                    <input type="text" id="boxName" placeholder="Full Address with Postcode (e.g. 52a Norfolk Road, Enfield EN3 4BG)">
+                    <input type="text" id="boxName" placeholder="Full Address with Postcode (e.g. 69 Piedmont, London N17 6RY)">
                     <button class="icon-btn" style="width: auto; height: 35px; margin-top: 4px;" onclick="findAddress()" title="Find / Map Address">🔍</button>
                 </div>
+
+                <!-- HMO Multi-Unit Toggle -->
+                <div class="checkbox-group" style="margin: 8px 0;">
+                    <input type="checkbox" id="isHmo" onchange="toggleHmoOptions()">
+                    <label for="isHmo" style="font-weight: bold; font-size: 12px; color: var(--text);">Is this an HMO / Multi-Unit Building (Flats / Rooms)?</label>
+                </div>
+
+                <div id="hmoInputs" style="display:none; background: var(--section-bg); padding: 8px; border-radius: 6px; margin-bottom: 8px;">
+                    <label>Number of Flats / Rooms:</label>
+                    <input type="number" id="hmoCount" min="1" max="20" value="4" placeholder="Number of units (e.g. 6)">
+                    <label>Naming Prefix:</label>
+                    <select id="hmoPrefix">
+                        <option value="Flat">Flat (e.g. Flat 1, Flat 2)</option>
+                        <option value="Room">Room (e.g. Room 1, Room 2)</option>
+                        <option value="Unit">Unit (e.g. Unit 1, Unit 2)</option>
+                    </select>
+                </div>
                 
-                <label>Add Photos:</label>
+                <label>Add Building Photos:</label>
                 <input type="file" id="boxPhoto" accept="image/*" multiple>
                 
-                <label>Add Video (Upload or Record):</label>
+                <label>Add Building Video:</label>
                 <input type="file" id="boxVideo" accept="video/*" capture="environment">
 
                 <button onclick="addLockBox()" style="margin-top: 8px;">Save Property</button>
             </div>
 
+            <!-- Inventory Search Bar -->
+            <input type="text" id="searchFilter" onkeyup="renderBoxes()" placeholder="🔍 Search address or flat (e.g. 69 piedmont)..." style="margin-bottom: 12px;">
+
             <!-- Inventory List -->
             <div class="card">
-                <h3>Property Inventory (Grouped by Zones)</h3>
+                <h3>Property Inventory</h3>
                 <div id="boxList"></div>
             </div>
         </div>
@@ -466,7 +498,7 @@
             <div class="card" style="border-left: 4px solid var(--red);">
                 <h3>⚠️ Action Required: Restock / Refill Needed</h3>
                 <p style="font-size: 12px; color: var(--text-muted); margin-bottom: 12px;">
-                    These properties have missing keys. Add photos/videos and restock keys to complete the job.
+                    These properties or individual flats have missing keys. Add photos/videos and restock keys to complete the job.
                 </p>
                 <div id="taskList"></div>
             </div>
@@ -500,27 +532,29 @@
     if (isPcMode) document.body.classList.add('pc-mode');
     updateToolbarIcons();
 
-    // Automatic Zone / Council Mapping based on Postcode Prefix or Keyword
     function detectZone(address) {
         if (!address) return "General Area";
         const upper = address.toUpperCase();
 
-        // 1. Specific Postcode Outward Code Matching
         if (/\bEN1\b|\bEN2\b|\bEN3\b/.test(upper) || upper.includes("ENFIELD")) return "Enfield Zone";
         if (/\bEN9\b/.test(upper) || upper.includes("WALTHAM ABBEY") || upper.includes("EPPING FOREST")) return "Epping Forest District";
         if (/\bEN6\b/.test(upper) || upper.includes("POTTERS BAR") || upper.includes("HERTSMERE")) return "Hertsmere Borough";
-        if (/\bN15\b|\bN17\b|\bN8\b/.test(upper) || upper.includes("HARINGEY") || upper.includes("TOTTENHAM")) return "Haringey Zone";
+        if (/\bN15\b|\bN17\b|\bN8\b/.test(upper) || upper.includes("HARINGEY") || upper.includes("TOTTENHAM") || upper.includes("PIEDMONT")) return "Haringey Zone";
         if (/\bE4\b|\bE11\b|\bE17\b/.test(upper) || upper.includes("WALTHAM FOREST") || upper.includes("WALTHAMSTOW")) return "Waltham Forest Zone";
         if (/\bN9\b|\bN18\b/.test(upper) || upper.includes("EDMONTON")) return "Edmonton / Enfield South";
         if (/\bEN8\b/.test(upper) || upper.includes("WALTHAM CROSS")) return "Waltham Cross Zone";
 
-        // 2. Fallback Broader Postal Prefix Extraction
         const postalMatch = upper.match(/\b([A-Z]{1,2}[0-9]{1,2})\b/);
         if (postalMatch && postalMatch[1]) {
             return `Zone ${postalMatch[1]}`;
         }
 
         return "Other Area";
+    }
+
+    function toggleHmoOptions() {
+        const isHmo = document.getElementById('isHmo').checked;
+        document.getElementById('hmoInputs').style.display = isHmo ? 'block' : 'none';
     }
 
     function saveAndRender() {
@@ -585,12 +619,32 @@
             }
         }
 
+        const isHmo = document.getElementById('isHmo').checked;
+        const units = [];
+
+        if (isHmo) {
+            const count = parseInt(document.getElementById('hmoCount').value) || 1;
+            const prefix = document.getElementById('hmoPrefix').value;
+            for (let i = 1; i <= count; i++) {
+                units.push({
+                    id: Date.now() + i,
+                    unitName: `${prefix} ${i}`,
+                    status: 'gray',
+                    lastAction: 'No actions logged yet.',
+                    actionTime: '',
+                    history: []
+                });
+            }
+        }
+
         const zone = detectZone(name);
 
         lockBoxes.push({
             id: Date.now(),
             name: name,
             zone: zone,
+            isHmo: isHmo,
+            units: units,
             photos: photoDataArray,
             videos: videoDataArray,
             status: 'gray',
@@ -602,6 +656,8 @@
         document.getElementById('boxName').value = '';
         document.getElementById('boxPhoto').value = '';
         document.getElementById('boxVideo').value = '';
+        document.getElementById('isHmo').checked = false;
+        toggleHmoOptions();
         saveAndRender();
     }
 
@@ -613,7 +669,7 @@
         });
     }
 
-    async function addMoreMedia(id, type) {
+    async function addMoreMedia(id, type, unitId = null) {
         const input = document.createElement('input');
         input.type = 'file';
         input.accept = type === 'photo' ? 'image/*' : 'video/*';
@@ -624,15 +680,20 @@
             const box = lockBoxes.find(b => b.id === id);
             if (!box) return;
 
+            let target = box;
+            if (unitId) {
+                target = box.units.find(u => u.id === unitId);
+            }
+
             if (type === 'photo') {
-                if (!box.photos) box.photos = [];
+                if (!target.photos) target.photos = [];
                 for (let file of e.target.files) {
-                    box.photos.push(await readFileAsDataURL(file));
+                    target.photos.push(await readFileAsDataURL(file));
                 }
             } else {
-                if (!box.videos) box.videos = [];
+                if (!target.videos) target.videos = [];
                 for (let file of e.target.files) {
-                    box.videos.push(await readFileAsDataURL(file));
+                    target.videos.push(await readFileAsDataURL(file));
                 }
             }
             saveAndRender();
@@ -651,11 +712,12 @@
         }
     }
 
-    function updateKeysGiven(id, prefix = '') {
-        const staff = document.getElementById(`${prefix}staff-give-${id}`).value;
-        const reasonSelect = document.getElementById(`${prefix}reason-give-${id}`).value;
-        const customNote = document.getElementById(`${prefix}note-give-${id}`).value.trim();
-        const isChecked = document.getElementById(`${prefix}check-give-${id}`).checked;
+    function updateKeysGiven(id, prefix = '', unitId = null) {
+        const targetKey = unitId ? `${prefix}unit-${unitId}-` : prefix;
+        const staff = document.getElementById(`${targetKey}staff-give-${id}`).value;
+        const reasonSelect = document.getElementById(`${targetKey}reason-give-${id}`).value;
+        const customNote = document.getElementById(`${targetKey}note-give-${id}`).value.trim();
+        const isChecked = document.getElementById(`${targetKey}check-give-${id}`).checked;
 
         if (!isChecked) return alert('Please check the box confirming keys were removed!');
 
@@ -667,23 +729,26 @@
 
         const now = new Date().toLocaleString();
         const box = lockBoxes.find(b => b.id === id);
+        let target = box;
+        if (unitId) target = box.units.find(u => u.id === unitId);
 
         const logEntry = `Keys removed by ${staff} [Reason: ${fullReason}]`;
-        box.status = 'red';
-        box.lastAction = logEntry;
-        box.actionTime = now;
+        target.status = 'red';
+        target.lastAction = logEntry;
+        target.actionTime = now;
 
-        if (!box.history) box.history = [];
-        box.history.unshift({ action: logEntry, time: now });
+        if (!target.history) target.history = [];
+        target.history.unshift({ action: logEntry, time: now });
 
         saveAndRender();
     }
 
-    function updateKeysAdded(id, prefix = '') {
-        const staff = document.getElementById(`${prefix}staff-add-${id}`).value;
-        const reasonSelect = document.getElementById(`${prefix}reason-add-${id}`).value;
-        const customNote = document.getElementById(`${prefix}note-add-${id}`).value.trim();
-        const isChecked = document.getElementById(`${prefix}check-add-${id}`).checked;
+    function updateKeysAdded(id, prefix = '', unitId = null) {
+        const targetKey = unitId ? `${prefix}unit-${unitId}-` : prefix;
+        const staff = document.getElementById(`${targetKey}staff-add-${id}`).value;
+        const reasonSelect = document.getElementById(`${targetKey}reason-add-${id}`).value;
+        const customNote = document.getElementById(`${targetKey}note-add-${id}`).value.trim();
+        const isChecked = document.getElementById(`${targetKey}check-add-${id}`).checked;
 
         if (!isChecked) return alert('Please check the box confirming keys are inside!');
 
@@ -695,30 +760,39 @@
 
         const now = new Date().toLocaleString();
         const box = lockBoxes.find(b => b.id === id);
+        let target = box;
+        if (unitId) target = box.units.find(u => u.id === unitId);
 
         const logEntry = `Keys added by ${staff} [Note: ${fullReason}]`;
-        box.status = 'green';
-        box.lastAction = logEntry;
-        box.actionTime = now;
+        target.status = 'green';
+        target.lastAction = logEntry;
+        target.actionTime = now;
 
-        if (!box.history) box.history = [];
-        box.history.unshift({ action: logEntry, time: now });
+        if (!target.history) target.history = [];
+        target.history.unshift({ action: logEntry, time: now });
 
         saveAndRender();
     }
 
-    function openHistory(id) {
+    function openHistory(id, unitId = null) {
         const box = lockBoxes.find(b => b.id === id);
         if (!box) return;
 
-        document.getElementById('modalBoxTitle').innerText = `📜 History: ${box.name}`;
+        let target = box;
+        let title = box.name;
+        if (unitId) {
+            target = box.units.find(u => u.id === unitId);
+            title = `${box.name} - ${target.unitName}`;
+        }
+
+        document.getElementById('modalBoxTitle').innerText = `📜 History: ${title}`;
         const container = document.getElementById('modalHistoryContent');
         container.innerHTML = '';
 
-        if (!box.history || box.history.length === 0) {
+        if (!target.history || target.history.length === 0) {
             container.innerHTML = '<p style="font-size:12px; color:var(--text-muted);">No recorded history yet.</p>';
         } else {
-            box.history.forEach(item => {
+            target.history.forEach(item => {
                 const div = document.createElement('div');
                 div.className = 'history-list-item';
                 div.innerHTML = `
@@ -756,23 +830,126 @@
         }
     }
 
-    function renderBoxTemplate(b, isTaskPage = false) {
+    function renderSingleActionBlock(b, targetObj, isTaskPage, unitId = null) {
         const prefix = isTaskPage ? 'task-' : '';
+        const keyPrefix = unitId ? `${prefix}unit-${unitId}-` : prefix;
+        const objId = unitId || b.id;
+
+        return `
+            <div class="log-info">
+                <div>
+                    <strong>Last Action:</strong> ${targetObj.lastAction}<br>
+                    ${targetObj.actionTime ? `<span>🕒 ${targetObj.actionTime}</span>` : ''}
+                </div>
+                <button class="history-btn" onclick="openHistory(${b.id}, ${unitId})">🕒 History</button>
+            </div>
+
+            ${!isTaskPage ? `
+            <div class="action-block" style="border-left: 3px solid var(--red);">
+                <div class="section-title">🔑 Give Keys / Remove Keys</div>
+                
+                <select id="${keyPrefix}staff-give-${b.id}">
+                    <option value="Alex">By: Alex</option>
+                    <option value="Denis">By: Denis</option>
+                </select>
+
+                <select id="${keyPrefix}reason-give-${b.id}" onchange="toggleReasonNote(${b.id}, 'give', '${keyPrefix}')">
+                    <option value="Tenant Moved In">Reason: Tenant Moved In</option>
+                    <option value="Tenant Lost Keys (Code Given)">Reason: Tenant Lost Keys (Access Code Given)</option>
+                    <option value="Other">Reason: Other (Type Below)</option>
+                </select>
+
+                <input type="text" id="${keyPrefix}note-give-${b.id}" class="note-input" placeholder="Enter reason here...">
+
+                <div class="checkbox-group">
+                    <input type="checkbox" id="${keyPrefix}check-give-${b.id}">
+                    <label for="${keyPrefix}check-give-${b.id}">Keys out (LockBox empty)</label>
+                </div>
+
+                <button style="background-color: var(--red);" onclick="updateKeysGiven(${b.id}, '${prefix}', ${unitId})">Update: Keys Out (Empty)</button>
+            </div>
+            ` : ''}
+
+            <div class="action-block" style="border-left: 3px solid var(--green);">
+                <div class="section-title">📥 Restock / Add Keys</div>
+                
+                <select id="${keyPrefix}staff-add-${b.id}">
+                    <option value="Alex">By: Alex</option>
+                    <option value="Denis">By: Denis</option>
+                </select>
+
+                <select id="${keyPrefix}reason-add-${b.id}" onchange="toggleReasonNote(${b.id}, 'add', '${keyPrefix}')">
+                    <option value="Refilled / Standard">Reason: Refilled / Standard</option>
+                    <option value="Added Spare Keys">Reason: Added Spare Keys</option>
+                    <option value="Other">Reason: Other (Type Below)</option>
+                </select>
+
+                <input type="text" id="${keyPrefix}note-add-${b.id}" class="note-input" placeholder="Enter reason/note here...">
+
+                <div class="checkbox-group">
+                    <input type="checkbox" id="${keyPrefix}check-add-${b.id}">
+                    <label for="${keyPrefix}check-add-${b.id}">Keys placed inside LockBox</label>
+                </div>
+
+                <button style="background-color: var(--green);" onclick="updateKeysAdded(${b.id}, '${prefix}', ${unitId})">Update: Keys Inside</button>
+            </div>
+        `;
+    }
+
+    function renderBoxTemplate(b, isTaskPage = false) {
         let statusLabel = "Gray: Nothing Added";
         if (b.status === 'green') statusLabel = "Green: Keys Inside";
         if (b.status === 'red') statusLabel = "Red: Keys Missing";
 
-        const photos = b.photos || (b.photo ? [b.photo] : []);
+        const photos = b.photos || [];
         const videos = b.videos || [];
+
+        let hmoMarkup = '';
+        if (b.isHmo && b.units && b.units.length > 0) {
+            let unitsToDisplay = b.units;
+            if (isTaskPage) {
+                unitsToDisplay = b.units.filter(u => u.status === 'red');
+            }
+
+            hmoMarkup = unitsToDisplay.map(u => {
+                let unitStatusLabel = "Gray";
+                if (u.status === 'green') unitStatusLabel = "Keys Inside";
+                if (u.status === 'red') unitStatusLabel = "Keys Missing";
+
+                const uPhotos = u.photos || [];
+                const uVideos = u.videos || [];
+
+                return `
+                    <div class="hmo-unit-box">
+                        <div class="lockbox-header">
+                            <h5 style="margin:0; font-size:13px;">🚪 ${u.unitName}</h5>
+                            <span class="status-badge bg-${u.status}">${unitStatusLabel}</span>
+                        </div>
+
+                        <div class="media-gallery">
+                            ${uPhotos.map(p => `<img src="${p}" class="media-thumb" onclick="openMediaViewer('${p}', 'image')">`).join('')}
+                            ${uVideos.map(v => `<video src="${v}" class="media-thumb" onclick="openMediaViewer('${v}', 'video')"></video>`).join('')}
+                        </div>
+
+                        <div style="display:flex; gap:6px; margin-bottom:6px;">
+                            <button class="btn-small" style="background:var(--section-bg); color:var(--text); border:1px solid var(--border);" onclick="addMoreMedia(${b.id}, 'photo', ${u.id})">+ Photo</button>
+                            <button class="btn-small" style="background:var(--section-bg); color:var(--text); border:1px solid var(--border);" onclick="addMoreMedia(${b.id}, 'video', ${u.id})">+ Video</button>
+                        </div>
+
+                        ${renderSingleActionBlock(b, u, isTaskPage, u.id)}
+                    </div>
+                `;
+            }).join('');
+        }
 
         return `
             <div class="lockbox-item">
                 <div class="lockbox-header">
-                    <h4>🏠 ${b.name}</h4>
-                    <span class="status-badge bg-${b.status}">${statusLabel}</span>
+                    <h4>🏢 ${b.name} ${b.isHmo ? '<span style="font-size:11px; color:var(--text-muted);">(HMO / Multi-Unit)</span>' : ''}</h4>
+                    ${!b.isHmo ? `<span class="status-badge bg-${b.status}">${statusLabel}</span>` : ''}
                 </div>
                 
-                <!-- Media Gallery -->
+                <!-- Main Building Media -->
                 <div class="media-gallery">
                     ${photos.map(p => `<img src="${p}" class="media-thumb" onclick="openMediaViewer('${p}', 'image')">`).join('')}
                     ${videos.map(v => `<video src="${v}" class="media-thumb" onclick="openMediaViewer('${v}', 'video')"></video>`).join('')}
@@ -783,66 +960,10 @@
                     <button class="btn-small" style="background:var(--section-bg); color:var(--text); border:1px solid var(--border);" onclick="addMoreMedia(${b.id}, 'video')">+ Video</button>
                 </div>
 
-                <!-- Last Action Banner -->
-                <div class="log-info">
-                    <div>
-                        <strong>Last Action:</strong> ${b.lastAction}<br>
-                        ${b.actionTime ? `<span>🕒 ${b.actionTime}</span>` : ''}
-                    </div>
-                    <button class="history-btn" onclick="openHistory(${b.id})">🕒 History</button>
-                </div>
+                ${!b.isHmo ? renderSingleActionBlock(b, b, isTaskPage, null) : ''}
 
-                ${!isTaskPage ? `
-                <!-- Keys Out Section (Main Page Only) -->
-                <div class="action-block" style="border-left: 3px solid var(--red);">
-                    <div class="section-title">🔑 Give Keys / Remove Keys</div>
-                    
-                    <select id="${prefix}staff-give-${b.id}">
-                        <option value="Alex">By: Alex</option>
-                        <option value="Denis">By: Denis</option>
-                    </select>
-
-                    <select id="${prefix}reason-give-${b.id}" onchange="toggleReasonNote(${b.id}, 'give', '${prefix}')">
-                        <option value="Tenant Moved In">Reason: Tenant Moved In</option>
-                        <option value="Tenant Lost Keys (Code Given)">Reason: Tenant Lost Keys (Access Code Given)</option>
-                        <option value="Other">Reason: Other (Type Below)</option>
-                    </select>
-
-                    <input type="text" id="${prefix}note-give-${b.id}" class="note-input" placeholder="Enter reason here...">
-
-                    <div class="checkbox-group">
-                        <input type="checkbox" id="${prefix}check-give-${b.id}">
-                        <label for="${prefix}check-give-${b.id}">Keys out (LockBox empty)</label>
-                    </div>
-
-                    <button style="background-color: var(--red);" onclick="updateKeysGiven(${b.id}, '${prefix}')">Update: Keys Out (Empty)</button>
-                </div>
-                ` : ''}
-
-                <!-- Refill Section (Both Pages) -->
-                <div class="action-block" style="border-left: 3px solid var(--green);">
-                    <div class="section-title">📥 Restock / Add Keys</div>
-                    
-                    <select id="${prefix}staff-add-${b.id}">
-                        <option value="Alex">By: Alex</option>
-                        <option value="Denis">By: Denis</option>
-                    </select>
-
-                    <select id="${prefix}reason-add-${b.id}" onchange="toggleReasonNote(${b.id}, 'add', '${prefix}')">
-                        <option value="Refilled / Standard">Reason: Refilled / Standard</option>
-                        <option value="Added Spare Keys">Reason: Added Spare Keys</option>
-                        <option value="Other">Reason: Other (Type Below)</option>
-                    </select>
-
-                    <input type="text" id="${prefix}note-add-${b.id}" class="note-input" placeholder="Enter reason/note here...">
-
-                    <div class="checkbox-group">
-                        <input type="checkbox" id="${prefix}check-add-${b.id}">
-                        <label for="${prefix}check-add-${b.id}">Keys placed inside LockBox</label>
-                    </div>
-
-                    <button style="background-color: var(--green);" onclick="updateKeysAdded(${b.id}, '${prefix}')">Update: Keys Inside</button>
-                </div>
+                <!-- HMO Sub-Units Section -->
+                ${hmoMarkup}
 
                 <button style="background: transparent; color: var(--text-muted); width: auto; font-size: 11px; margin-top: 6px; padding: 2px 4px;" onclick="deleteBox(${b.id})">🗑 Delete Property</button>
             </div>
@@ -861,6 +982,7 @@
 
     function renderBoxes() {
         const list = document.getElementById('boxList');
+        const filter = (document.getElementById('searchFilter')?.value || '').toLowerCase().trim();
         list.innerHTML = '';
 
         if (lockBoxes.length === 0) {
@@ -868,7 +990,19 @@
             return;
         }
 
-        const grouped = groupBoxesByZone(lockBoxes);
+        const filtered = lockBoxes.filter(b => {
+            if (!filter) return true;
+            const nameMatch = b.name.toLowerCase().includes(filter);
+            const unitMatch = b.isHmo && b.units && b.units.some(u => u.unitName.toLowerCase().includes(filter));
+            return nameMatch || unitMatch;
+        });
+
+        if (filtered.length === 0) {
+            list.innerHTML = '<p style="text-align:center; color:var(--text-muted); font-size:12px;">No properties match your search.</p>';
+            return;
+        }
+
+        const grouped = groupBoxesByZone(filtered);
 
         for (const zoneName in grouped) {
             const zoneHeader = document.createElement('div');
@@ -889,7 +1023,12 @@
         const alertBadge = document.getElementById('alertCount');
         taskList.innerHTML = '';
 
-        const missingKeysBoxes = lockBoxes.filter(b => b.status === 'red');
+        const missingKeysBoxes = lockBoxes.filter(b => {
+            if (b.isHmo && b.units) {
+                return b.units.some(u => u.status === 'red');
+            }
+            return b.status === 'red';
+        });
 
         if (missingKeysBoxes.length === 0) {
             alertBadge.style.display = 'none';
@@ -897,8 +1036,17 @@
             return;
         }
 
+        let alertTotal = 0;
+        missingKeysBoxes.forEach(b => {
+            if (b.isHmo && b.units) {
+                alertTotal += b.units.filter(u => u.status === 'red').length;
+            } else {
+                alertTotal += 1;
+            }
+        });
+
         alertBadge.style.display = 'inline';
-        alertBadge.innerText = missingKeysBoxes.length;
+        alertBadge.innerText = alertTotal;
 
         const grouped = groupBoxesByZone(missingKeysBoxes);
 
