@@ -443,7 +443,7 @@
             <div class="card" style="border-left: 4px solid var(--red);">
                 <h3>⚠️ Action Required: Restock / Refill Needed</h3>
                 <p style="font-size: 12px; color: var(--text-muted); margin-bottom: 12px;">
-                    These properties have missing keys or were recently given to tenants. Use this page to refill keys, record updates, and attach photos or videos.
+                    These properties have missing keys. Add photos/videos and restock keys to complete the job.
                 </p>
                 <div id="taskList"></div>
             </div>
@@ -473,7 +473,6 @@
     let isDarkMode = localStorage.getItem('isDarkMode') !== 'false';
     let isPcMode = localStorage.getItem('isPcMode') === 'true';
 
-    // Apply Saved Preferences
     if (!isDarkMode) document.body.classList.add('light-mode');
     if (isPcMode) document.body.classList.add('pc-mode');
     updateToolbarIcons();
@@ -593,9 +592,9 @@
         input.click();
     }
 
-    function toggleReasonNote(id, section) {
-        const reasonSelect = document.getElementById(`reason-${section}-${id}`).value;
-        const noteField = document.getElementById(`note-${section}-${id}`);
+    function toggleReasonNote(id, section, prefix = '') {
+        const reasonSelect = document.getElementById(`${prefix}reason-${section}-${id}`).value;
+        const noteField = document.getElementById(`${prefix}note-${section}-${id}`);
         if (reasonSelect === 'Other') {
             noteField.style.display = 'block';
         } else {
@@ -603,11 +602,11 @@
         }
     }
 
-    function updateKeysGiven(id) {
-        const staff = document.getElementById(`staff-give-${id}`).value;
-        const reasonSelect = document.getElementById(`reason-give-${id}`).value;
-        const customNote = document.getElementById(`note-give-${id}`).value.trim();
-        const isChecked = document.getElementById(`check-give-${id}`).checked;
+    function updateKeysGiven(id, prefix = '') {
+        const staff = document.getElementById(`${prefix}staff-give-${id}`).value;
+        const reasonSelect = document.getElementById(`${prefix}reason-give-${id}`).value;
+        const customNote = document.getElementById(`${prefix}note-give-${id}`).value.trim();
+        const isChecked = document.getElementById(`${prefix}check-give-${id}`).checked;
 
         if (!isChecked) return alert('Please check the box confirming keys were removed!');
 
@@ -631,11 +630,11 @@
         saveAndRender();
     }
 
-    function updateKeysAdded(id) {
-        const staff = document.getElementById(`staff-add-${id}`).value;
-        const reasonSelect = document.getElementById(`reason-add-${id}`).value;
-        const customNote = document.getElementById(`note-add-${id}`).value.trim();
-        const isChecked = document.getElementById(`check-add-${id}`).checked;
+    function updateKeysAdded(id, prefix = '') {
+        const staff = document.getElementById(`${prefix}staff-add-${id}`).value;
+        const reasonSelect = document.getElementById(`${prefix}reason-add-${id}`).value;
+        const customNote = document.getElementById(`${prefix}note-add-${id}`).value.trim();
+        const isChecked = document.getElementById(`${prefix}check-add-${id}`).checked;
 
         if (!isChecked) return alert('Please check the box confirming keys are inside!');
 
@@ -708,7 +707,8 @@
         }
     }
 
-    function renderBoxTemplate(b) {
+    function renderBoxTemplate(b, isTaskPage = false) {
+        const prefix = isTaskPage ? 'task-' : '';
         let statusLabel = "Gray: Nothing Added";
         if (b.status === 'green') statusLabel = "Green: Keys Inside";
         if (b.status === 'red') statusLabel = "Red: Keys Missing";
@@ -743,54 +743,56 @@
                     <button class="history-btn" onclick="openHistory(${b.id})">🕒 History</button>
                 </div>
 
-                <!-- Keys Out Section -->
+                ${!isTaskPage ? `
+                <!-- Keys Out Section (Main Page Only) -->
                 <div class="action-block" style="border-left: 3px solid var(--red);">
                     <div class="section-title">🔑 Give Keys / Remove Keys</div>
                     
-                    <select id="staff-give-${b.id}">
+                    <select id="${prefix}staff-give-${b.id}">
                         <option value="Alex">By: Alex</option>
                         <option value="Denis">By: Denis</option>
                     </select>
 
-                    <select id="reason-give-${b.id}" onchange="toggleReasonNote(${b.id}, 'give')">
+                    <select id="${prefix}reason-give-${b.id}" onchange="toggleReasonNote(${b.id}, 'give', '${prefix}')">
                         <option value="Tenant Moved In">Reason: Tenant Moved In</option>
                         <option value="Tenant Lost Keys (Code Given)">Reason: Tenant Lost Keys (Access Code Given)</option>
                         <option value="Other">Reason: Other (Type Below)</option>
                     </select>
 
-                    <input type="text" id="note-give-${b.id}" class="note-input" placeholder="Enter reason here...">
+                    <input type="text" id="${prefix}note-give-${b.id}" class="note-input" placeholder="Enter reason here...">
 
                     <div class="checkbox-group">
-                        <input type="checkbox" id="check-give-${b.id}">
-                        <label for="check-give-${b.id}">Keys out (LockBox empty)</label>
+                        <input type="checkbox" id="${prefix}check-give-${b.id}">
+                        <label for="${prefix}check-give-${b.id}">Keys out (LockBox empty)</label>
                     </div>
 
-                    <button style="background-color: var(--red);" onclick="updateKeysGiven(${b.id})">Update: Keys Out (Empty)</button>
+                    <button style="background-color: var(--red);" onclick="updateKeysGiven(${b.id}, '${prefix}')">Update: Keys Out (Empty)</button>
                 </div>
+                ` : ''}
 
-                <!-- Refill Section -->
+                <!-- Refill Section (Both Pages) -->
                 <div class="action-block" style="border-left: 3px solid var(--green);">
                     <div class="section-title">📥 Restock / Add Keys</div>
                     
-                    <select id="staff-add-${b.id}">
+                    <select id="${prefix}staff-add-${b.id}">
                         <option value="Alex">By: Alex</option>
                         <option value="Denis">By: Denis</option>
                     </select>
 
-                    <select id="reason-add-${b.id}" onchange="toggleReasonNote(${b.id}, 'add')">
+                    <select id="${prefix}reason-add-${b.id}" onchange="toggleReasonNote(${b.id}, 'add', '${prefix}')">
                         <option value="Refilled / Standard">Reason: Refilled / Standard</option>
                         <option value="Added Spare Keys">Reason: Added Spare Keys</option>
                         <option value="Other">Reason: Other (Type Below)</option>
                     </select>
 
-                    <input type="text" id="note-add-${b.id}" class="note-input" placeholder="Enter reason/note here...">
+                    <input type="text" id="${prefix}note-add-${b.id}" class="note-input" placeholder="Enter reason/note here...">
 
                     <div class="checkbox-group">
-                        <input type="checkbox" id="check-add-${b.id}">
-                        <label for="check-add-${b.id}">Keys placed inside LockBox</label>
+                        <input type="checkbox" id="${prefix}check-add-${b.id}">
+                        <label for="${prefix}check-add-${b.id}">Keys placed inside LockBox</label>
                     </div>
 
-                    <button style="background-color: var(--green);" onclick="updateKeysAdded(${b.id})">Update: Keys Inside</button>
+                    <button style="background-color: var(--green);" onclick="updateKeysAdded(${b.id}, '${prefix}')">Update: Keys Inside</button>
                 </div>
 
                 <button style="background: transparent; color: var(--text-muted); width: auto; font-size: 11px; margin-top: 6px; padding: 2px 4px;" onclick="deleteBox(${b.id})">🗑 Delete Property</button>
@@ -809,7 +811,7 @@
 
         lockBoxes.forEach(b => {
             const item = document.createElement('div');
-            item.innerHTML = renderBoxTemplate(b);
+            item.innerHTML = renderBoxTemplate(b, false);
             list.appendChild(item);
         });
     }
@@ -832,7 +834,7 @@
 
         missingKeysBoxes.forEach(b => {
             const item = document.createElement('div');
-            item.innerHTML = renderBoxTemplate(b);
+            item.innerHTML = renderBoxTemplate(b, true);
             taskList.appendChild(item);
         });
     }
