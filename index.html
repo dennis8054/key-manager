@@ -20,7 +20,12 @@
             --input-bg: #2a2a2a;
             --zone-bg: #002b49;
             --zone-text: #6ea8fe;
-            --unit-bg: #22272e;
+
+            /* Professional Distinction Colors */
+            --parent-header-bg: #1e293b; /* Slate Navy for Main Building */
+            --parent-border: #334155;
+            --unit-bg: #1e2030;          /* Deep Indigo/Gray for Sub-Units/Flats */
+            --unit-border: #4f46e5;
         }
 
         body.light-mode {
@@ -34,7 +39,11 @@
             --input-bg: #ffffff;
             --zone-bg: #e7f1ff;
             --zone-text: #0a58ca;
-            --unit-bg: #f1f3f5;
+
+            --parent-header-bg: #e2e8f0;
+            --parent-border: #cbd5e1;
+            --unit-bg: #f0f3ff;
+            --unit-border: #6366f1;
         }
 
         body {
@@ -240,16 +249,13 @@
             margin-top: 0;
         }
 
+        /* Parent Property Item Styling */
         .lockbox-item {
-            border-bottom: 1px solid var(--border);
-            padding-bottom: 12px;
+            background-color: var(--parent-header-bg);
+            border: 1px solid var(--parent-border);
+            border-radius: 8px;
+            padding: 12px;
             margin-bottom: 12px;
-        }
-
-        .lockbox-item:last-child {
-            border-bottom: none;
-            padding-bottom: 0;
-            margin-bottom: 0;
         }
 
         .lockbox-header {
@@ -266,13 +272,57 @@
         }
 
         /* HMO Sub-units container */
+        .hmo-toggle-btn {
+            background-color: var(--section-bg);
+            color: var(--text);
+            border: 1px solid var(--border);
+            margin: 8px 0;
+            font-size: 12px;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+        }
+
+        .hmo-units-wrapper {
+            display: none; /* Collapsed by default */
+            margin-top: 8px;
+            padding-left: 6px;
+            border-left: 2px dashed var(--unit-border);
+        }
+
+        .hmo-units-wrapper.open {
+            display: block;
+        }
+
         .hmo-unit-box {
             background-color: var(--unit-bg);
-            border-left: 3px solid var(--primary);
-            padding: 8px 10px;
+            border-left: 4px solid var(--unit-border);
+            border-top: 1px solid var(--border);
+            border-right: 1px solid var(--border);
+            border-bottom: 1px solid var(--border);
+            padding: 10px;
             border-radius: 6px;
             margin-top: 8px;
-            margin-left: 10px;
+        }
+
+        .code-display-box {
+            background-color: rgba(0, 0, 0, 0.25);
+            border: 1px dashed var(--primary);
+            padding: 6px 8px;
+            border-radius: 6px;
+            margin: 6px 0;
+            font-size: 12px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        .code-display-box span.code-num {
+            font-family: monospace;
+            font-weight: bold;
+            font-size: 14px;
+            color: var(--zone-text);
+            letter-spacing: 1px;
         }
 
         .media-gallery {
@@ -457,6 +507,9 @@
                     <button class="icon-btn" style="width: auto; height: 35px; margin-top: 4px;" onclick="findAddress()" title="Find / Map Address">🔍</button>
                 </div>
 
+                <label>Initial LockBox Code (Optional):</label>
+                <input type="text" id="initialCode" placeholder="e.g. 4589 or C1234X">
+
                 <!-- HMO Multi-Unit Toggle -->
                 <div class="checkbox-group" style="margin: 8px 0;">
                     <input type="checkbox" id="isHmo" onchange="toggleHmoOptions()">
@@ -487,18 +540,15 @@
             <input type="text" id="searchFilter" onkeyup="renderBoxes()" placeholder="🔍 Search address or flat (e.g. 69 piedmont)..." style="margin-bottom: 12px;">
 
             <!-- Inventory List -->
-            <div class="card">
-                <h3>Property Inventory</h3>
-                <div id="boxList"></div>
-            </div>
+            <div id="boxList"></div>
         </div>
 
-        <!-- PAGE 2: ACTION REQUIRED (MISSING KEYS / JOBS) -->
+        <!-- PAGE 2: ACTION REQUIRED (MISSING KEYS & PENDING SETUP JOBS) -->
         <div id="pageTasks" class="page-view">
             <div class="card" style="border-left: 4px solid var(--red);">
-                <h3>⚠️ Action Required: Restock / Refill Needed</h3>
+                <h3>⚠️ Action Required: Pending Setup & Missing Keys</h3>
                 <p style="font-size: 12px; color: var(--text-muted); margin-bottom: 12px;">
-                    These properties or individual flats have missing keys. Add photos/videos and restock keys to complete the job.
+                    Properties requiring attention (Pending initial setup or missing keys). Update codes, add keys, or log actions to resolve.
                 </p>
                 <div id="taskList"></div>
             </div>
@@ -557,6 +607,16 @@
         document.getElementById('hmoInputs').style.display = isHmo ? 'block' : 'none';
     }
 
+    function toggleHmoAccordion(id) {
+        const wrapper = document.getElementById(`hmo-wrapper-${id}`);
+        const btn = document.getElementById(`hmo-btn-${id}`);
+        if (wrapper) {
+            wrapper.classList.toggle('open');
+            const isOpen = wrapper.classList.contains('open');
+            btn.innerText = isOpen ? '📂 Hide Flats / Units 🔼' : '📂 Show Flats / Units 🔽';
+        }
+    }
+
     function saveAndRender() {
         localStorage.setItem('myLockBoxes', JSON.stringify(lockBoxes));
         renderBoxes();
@@ -600,6 +660,7 @@
 
     async function addLockBox() {
         const name = document.getElementById('boxName').value.trim();
+        const code = document.getElementById('initialCode').value.trim() || 'Not Set';
         const photoInput = document.getElementById('boxPhoto');
         const videoInput = document.getElementById('boxVideo');
 
@@ -629,31 +690,35 @@
                 units.push({
                     id: Date.now() + i,
                     unitName: `${prefix} ${i}`,
+                    code: code,
                     status: 'gray',
-                    lastAction: 'No actions logged yet.',
-                    actionTime: '',
-                    history: []
+                    lastAction: 'Pending initial setup.',
+                    actionTime: new Date().toLocaleString(),
+                    history: [{ action: `Unit added. Code: ${code}`, time: new Date().toLocaleString() }]
                 });
             }
         }
 
         const zone = detectZone(name);
+        const now = new Date().toLocaleString();
 
         lockBoxes.push({
             id: Date.now(),
             name: name,
             zone: zone,
+            code: code,
             isHmo: isHmo,
             units: units,
             photos: photoDataArray,
             videos: videoDataArray,
             status: 'gray',
-            lastAction: 'No actions logged yet.',
-            actionTime: '',
-            history: []
+            lastAction: 'Pending initial setup.',
+            actionTime: now,
+            history: [{ action: `Property created. Code set to: ${code}`, time: now }]
         });
 
         document.getElementById('boxName').value = '';
+        document.getElementById('initialCode').value = '';
         document.getElementById('boxPhoto').value = '';
         document.getElementById('boxVideo').value = '';
         document.getElementById('isHmo').checked = false;
@@ -702,6 +767,30 @@
         input.click();
     }
 
+    function updateCode(id, prefix = '', unitId = null) {
+        const targetKey = unitId ? `${prefix}unit-${unitId}-` : prefix;
+        const newCode = document.getElementById(`${targetKey}code-input-${id}`).value.trim();
+
+        if (!newCode) return alert('Please enter a valid code!');
+
+        const box = lockBoxes.find(b => b.id === id);
+        let target = box;
+        if (unitId) target = box.units.find(u => u.id === unitId);
+
+        const oldCode = target.code || 'Not Set';
+        target.code = newCode;
+        const now = new Date().toLocaleString();
+
+        const logEntry = `LockBox code changed from [${oldCode}] to [${newCode}]`;
+        target.lastAction = logEntry;
+        target.actionTime = now;
+
+        if (!target.history) target.history = [];
+        target.history.unshift({ action: logEntry, time: now });
+
+        saveAndRender();
+    }
+
     function toggleReasonNote(id, section, prefix = '') {
         const reasonSelect = document.getElementById(`${prefix}reason-${section}-${id}`).value;
         const noteField = document.getElementById(`${prefix}note-${section}-${id}`);
@@ -732,7 +821,7 @@
         let target = box;
         if (unitId) target = box.units.find(u => u.id === unitId);
 
-        const logEntry = `Keys removed by ${staff} [Reason: ${fullReason}]`;
+        const logEntry = `Keys removed by ${staff} [Reason: ${fullReason}] (Code used: ${target.code || 'N/A'})`;
         target.status = 'red';
         target.lastAction = logEntry;
         target.actionTime = now;
@@ -763,7 +852,7 @@
         let target = box;
         if (unitId) target = box.units.find(u => u.id === unitId);
 
-        const logEntry = `Keys added by ${staff} [Note: ${fullReason}]`;
+        const logEntry = `Keys added by ${staff} [Note: ${fullReason}] (Code set: ${target.code || 'N/A'})`;
         target.status = 'green';
         target.lastAction = logEntry;
         target.actionTime = now;
@@ -833,15 +922,23 @@
     function renderSingleActionBlock(b, targetObj, isTaskPage, unitId = null) {
         const prefix = isTaskPage ? 'task-' : '';
         const keyPrefix = unitId ? `${prefix}unit-${unitId}-` : prefix;
-        const objId = unitId || b.id;
 
         return `
+            <!-- Code Management Box -->
+            <div class="code-display-box">
+                <div>🔑 Code: <span class="code-num">${targetObj.code || 'Not Set'}</span></div>
+                <div style="display:flex; gap:4px; align-items:center;">
+                    <input type="text" id="${keyPrefix}code-input-${b.id}" placeholder="New code" style="width: 80px; padding: 3px 6px; margin: 0; font-size: 11px;">
+                    <button class="btn-small" style="padding: 3px 6px;" onclick="updateCode(${b.id}, '${prefix}', ${unitId})">Set Code</button>
+                </div>
+            </div>
+
             <div class="log-info">
                 <div>
                     <strong>Last Action:</strong> ${targetObj.lastAction}<br>
                     ${targetObj.actionTime ? `<span>🕒 ${targetObj.actionTime}</span>` : ''}
                 </div>
-                <button class="history-btn" onclick="openHistory(${b.id}, ${unitId})">🕒 History</button>
+                <button class="history-btn" onclick="openHistory(${b.id}, ${unitId})">📜 History</button>
             </div>
 
             ${!isTaskPage ? `
@@ -896,10 +993,10 @@
         `;
     }
 
-    function renderBoxTemplate(b, isTaskPage = false) {
-        let statusLabel = "Gray: Nothing Added";
-        if (b.status === 'green') statusLabel = "Green: Keys Inside";
-        if (b.status === 'red') statusLabel = "Red: Keys Missing";
+    function renderBoxTemplate(b, isTaskPage = false, taskFilterStatus = null) {
+        let statusLabel = "Pending Setup (Attention Needed)";
+        if (b.status === 'green') statusLabel = "Keys Inside";
+        if (b.status === 'red') statusLabel = "Keys Missing";
 
         const photos = b.photos || [];
         const videos = b.videos || [];
@@ -907,45 +1004,61 @@
         let hmoMarkup = '';
         if (b.isHmo && b.units && b.units.length > 0) {
             let unitsToDisplay = b.units;
-            if (isTaskPage) {
-                unitsToDisplay = b.units.filter(u => u.status === 'red');
+            if (isTaskPage && taskFilterStatus) {
+                unitsToDisplay = b.units.filter(u => u.status === taskFilterStatus);
             }
 
-            hmoMarkup = unitsToDisplay.map(u => {
-                let unitStatusLabel = "Gray";
-                if (u.status === 'green') unitStatusLabel = "Keys Inside";
-                if (u.status === 'red') unitStatusLabel = "Keys Missing";
+            if (unitsToDisplay.length > 0) {
+                hmoMarkup = `
+                    <button class="hmo-toggle-btn" id="hmo-btn-${b.id}" onclick="toggleHmoAccordion(${b.id})">
+                        <span>📂 Show Flats / Units (${unitsToDisplay.length})</span>
+                        <span>🔽</span>
+                    </button>
+                    <div class="hmo-units-wrapper ${isTaskPage ? 'open' : ''}" id="hmo-wrapper-${b.id}">
+                        ${unitsToDisplay.map(u => {
+                            let unitStatusLabel = "Pending Setup (Attention Needed)";
+                            if (u.status === 'green') unitStatusLabel = "Keys Inside";
+                            if (u.status === 'red') unitStatusLabel = "Keys Missing";
 
-                const uPhotos = u.photos || [];
-                const uVideos = u.videos || [];
+                            const uPhotos = u.photos || [];
+                            const uVideos = u.videos || [];
 
-                return `
-                    <div class="hmo-unit-box">
-                        <div class="lockbox-header">
-                            <h5 style="margin:0; font-size:13px;">🚪 ${u.unitName}</h5>
-                            <span class="status-badge bg-${u.status}">${unitStatusLabel}</span>
-                        </div>
+                            return `
+                                <div class="hmo-unit-box">
+                                    <div class="lockbox-header">
+                                        <h5 style="margin:0; font-size:13px; color: var(--zone-text);">🚪 ${u.unitName}</h5>
+                                        <span class="status-badge bg-${u.status}">${unitStatusLabel}</span>
+                                    </div>
 
-                        <div class="media-gallery">
-                            ${uPhotos.map(p => `<img src="${p}" class="media-thumb" onclick="openMediaViewer('${p}', 'image')">`).join('')}
-                            ${uVideos.map(v => `<video src="${v}" class="media-thumb" onclick="openMediaViewer('${v}', 'video')"></video>`).join('')}
-                        </div>
+                                    <div class="media-gallery">
+                                        ${uPhotos.map(p => `<img src="${p}" class="media-thumb" onclick="openMediaViewer('${p}', 'image')">`).join('')}
+                                        ${uVideos.map(v => `<video src="${v}" class="media-thumb" onclick="openMediaViewer('${v}', 'video')"></video>`).join('')}
+                                    </div>
 
-                        <div style="display:flex; gap:6px; margin-bottom:6px;">
-                            <button class="btn-small" style="background:var(--section-bg); color:var(--text); border:1px solid var(--border);" onclick="addMoreMedia(${b.id}, 'photo', ${u.id})">+ Photo</button>
-                            <button class="btn-small" style="background:var(--section-bg); color:var(--text); border:1px solid var(--border);" onclick="addMoreMedia(${b.id}, 'video', ${u.id})">+ Video</button>
-                        </div>
+                                    <div style="display:flex; gap:6px; margin-bottom:6px;">
+                                        <button class="btn-small" style="background:var(--section-bg); color:var(--text); border:1px solid var(--border);" onclick="addMoreMedia(${b.id}, 'photo', ${u.id})">+ Photo</button>
+                                        <button class="btn-small" style="background:var(--section-bg); color:var(--text); border:1px solid var(--border);" onclick="addMoreMedia(${b.id}, 'video', ${u.id})">+ Video</button>
+                                    </div>
 
-                        ${renderSingleActionBlock(b, u, isTaskPage, u.id)}
+                                    ${renderSingleActionBlock(b, u, isTaskPage, u.id)}
+                                </div>
+                            `;
+                        }).join('')}
                     </div>
                 `;
-            }).join('');
+            }
+        }
+
+        const showParentBlock = !b.isHmo && (!isTaskPage || (isTaskPage && b.status === taskFilterStatus));
+
+        if (!showParentBlock && (!b.isHmo || (b.isHmo && !hmoMarkup))) {
+            return '';
         }
 
         return `
             <div class="lockbox-item">
                 <div class="lockbox-header">
-                    <h4>🏢 ${b.name} ${b.isHmo ? '<span style="font-size:11px; color:var(--text-muted);">(HMO / Multi-Unit)</span>' : ''}</h4>
+                    <h4>🏢 ${b.name} ${b.isHmo ? '<span style="font-size:11px; color:var(--text-muted);">(HMO Main Building)</span>' : ''}</h4>
                     ${!b.isHmo ? `<span class="status-badge bg-${b.status}">${statusLabel}</span>` : ''}
                 </div>
                 
@@ -960,9 +1073,9 @@
                     <button class="btn-small" style="background:var(--section-bg); color:var(--text); border:1px solid var(--border);" onclick="addMoreMedia(${b.id}, 'video')">+ Video</button>
                 </div>
 
-                ${!b.isHmo ? renderSingleActionBlock(b, b, isTaskPage, null) : ''}
+                ${showParentBlock ? renderSingleActionBlock(b, b, isTaskPage, null) : ''}
 
-                <!-- HMO Sub-Units Section -->
+                <!-- Collapsible HMO Units -->
                 ${hmoMarkup}
 
                 <button style="background: transparent; color: var(--text-muted); width: auto; font-size: 11px; margin-top: 6px; padding: 2px 4px;" onclick="deleteBox(${b.id})">🗑 Delete Property</button>
@@ -1023,42 +1136,56 @@
         const alertBadge = document.getElementById('alertCount');
         taskList.innerHTML = '';
 
-        const missingKeysBoxes = lockBoxes.filter(b => {
+        let redAlertCount = 0;
+        let grayAlertCount = 0;
+
+        lockBoxes.forEach(b => {
             if (b.isHmo && b.units) {
-                return b.units.some(u => u.status === 'red');
+                redAlertCount += b.units.filter(u => u.status === 'red').length;
+                grayAlertCount += b.units.filter(u => u.status === 'gray').length;
+            } else {
+                if (b.status === 'red') redAlertCount++;
+                if (b.status === 'gray') grayAlertCount++;
             }
-            return b.status === 'red';
         });
 
-        if (missingKeysBoxes.length === 0) {
+        const totalAttentionNeeded = redAlertCount + grayAlertCount;
+
+        if (totalAttentionNeeded === 0) {
             alertBadge.style.display = 'none';
-            taskList.innerHTML = '<p style="text-align:center; color:var(--text-muted); font-size:12px;">🎉 All LockBoxes are currently filled and stocked!</p>';
+            taskList.innerHTML = '<p style="text-align:center; color:var(--text-muted); font-size:12px;">🎉 All LockBoxes are set up and stocked!</p>';
             return;
         }
 
-        let alertTotal = 0;
-        missingKeysBoxes.forEach(b => {
-            if (b.isHmo && b.units) {
-                alertTotal += b.units.filter(u => u.status === 'red').length;
-            } else {
-                alertTotal += 1;
-            }
-        });
-
         alertBadge.style.display = 'inline';
-        alertBadge.innerText = alertTotal;
+        alertBadge.innerText = totalAttentionNeeded;
 
-        const grouped = groupBoxesByZone(missingKeysBoxes);
+        // SECTION 1: RED TASKS (MISSING KEYS)
+        if (redAlertCount > 0) {
+            const redTitle = document.createElement('div');
+            redTitle.style.cssText = "font-weight:bold; color:var(--red); font-size:14px; margin: 10px 0 6px 0; padding-bottom:4px; border-bottom:1px solid var(--red);";
+            redTitle.innerText = `🚨 Keys Missing / Empty LockBoxes (${redAlertCount})`;
+            taskList.appendChild(redTitle);
 
-        for (const zoneName in grouped) {
-            const zoneHeader = document.createElement('div');
-            zoneHeader.className = 'zone-header';
-            zoneHeader.innerHTML = `<span>📍 ${zoneName}</span> <span>(${grouped[zoneName].length})</span>`;
-            taskList.appendChild(zoneHeader);
-
-            grouped[zoneName].forEach(b => {
+            const redBoxes = lockBoxes.filter(b => (b.isHmo && b.units.some(u => u.status === 'red')) || (!b.isHmo && b.status === 'red'));
+            redBoxes.forEach(b => {
                 const item = document.createElement('div');
-                item.innerHTML = renderBoxTemplate(b, true);
+                item.innerHTML = renderBoxTemplate(b, true, 'red');
+                taskList.appendChild(item);
+            });
+        }
+
+        // SECTION 2: GRAY TASKS (PENDING INITIAL SETUP)
+        if (grayAlertCount > 0) {
+            const grayTitle = document.createElement('div');
+            grayTitle.style.cssText = "font-weight:bold; color:var(--gray); font-size:14px; margin: 20px 0 6px 0; padding-bottom:4px; border-bottom:1px solid var(--gray);";
+            grayTitle.innerText = `⚙️ Pending Initial Setup / Unfilled (${grayAlertCount})`;
+            taskList.appendChild(grayTitle);
+
+            const grayBoxes = lockBoxes.filter(b => (b.isHmo && b.units.some(u => u.status === 'gray')) || (!b.isHmo && b.status === 'gray'));
+            grayBoxes.forEach(b => {
+                const item = document.createElement('div');
+                item.innerHTML = renderBoxTemplate(b, true, 'gray');
                 taskList.appendChild(item);
             });
         }
