@@ -344,6 +344,38 @@
             margin-bottom: 12px;
         }
 
+        /* SIDE-BY-SIDE HMO CONTAINER */
+        .hmo-split-container {
+            display: flex;
+            flex-direction: column;
+            gap: 12px;
+        }
+
+        .hmo-split-container.open {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            align-items: start;
+        }
+
+        .hmo-parent-col {
+            width: 100%;
+        }
+
+        .hmo-child-col {
+            display: none;
+            width: 100%;
+            background: var(--section-bg);
+            border: 1px solid var(--border);
+            border-radius: 8px;
+            padding: 10px;
+        }
+
+        .hmo-split-container.open .hmo-child-col {
+            display: flex;
+            flex-direction: column;
+            gap: 10px;
+        }
+
         .lockbox-header {
             display: flex;
             justify-content: space-between;
@@ -364,7 +396,7 @@
             background-color: var(--section-bg);
             color: var(--text);
             border: 1px solid var(--border);
-            margin: 10px 0;
+            margin: 10px 0 0 0;
             font-size: 12px;
             display: flex;
             align-items: center;
@@ -372,22 +404,12 @@
             width: 100%;
         }
 
-        .hmo-units-wrapper {
-            display: none;
-            margin-top: 8px;
-            padding-left: 10px;
-            border-left: 2px solid var(--unit-border);
-        }
-
-        .hmo-units-wrapper.open { display: block; }
-
         .hmo-unit-box {
             background-color: var(--unit-bg);
             border-left: 3px solid var(--unit-border);
             border: 1px solid var(--border);
             padding: 12px;
             border-radius: 6px;
-            margin-top: 8px;
         }
 
         .code-display-box {
@@ -546,6 +568,12 @@
             max-width: 100%;
             max-height: 70vh;
             border-radius: 6px;
+        }
+
+        @media (max-width: 900px) {
+            .hmo-split-container.open {
+                grid-template-columns: 1fr;
+            }
         }
 
         @media (max-width: 768px) {
@@ -759,11 +787,12 @@
         if (openAccordions.has(accordionKey)) openAccordions.delete(accordionKey);
         else openAccordions.add(accordionKey);
 
-        const wrapper = document.getElementById(`hmo-wrapper-${prefix}${id}`);
+        const container = document.getElementById(`hmo-container-${prefix}${id}`);
         const btn = document.getElementById(`hmo-btn-${prefix}${id}`);
-        if (wrapper) {
-            wrapper.classList.toggle('open');
-            btn.innerHTML = wrapper.classList.contains('open') ? '<span>📂 Hide Flats / Units 🔼</span>' : '<span>📂 Show Flats / Units 🔽</span>';
+        if (container) {
+            container.classList.toggle('open');
+            const isOpen = container.classList.contains('open');
+            btn.innerHTML = isOpen ? '<span>📂 Hide Flats / Units 🔼</span>' : '<span>📂 Show Flats / Units 🔽</span>';
         }
     }
 
@@ -1156,37 +1185,62 @@
 
     function renderBoxTemplate(b, isTaskPage = false) {
         let statusLabel = b.status === 'green' ? "Keys Inside" : (b.status === 'red' ? "Keys Missing" : "Pending Setup");
+        const accordionPrefix = isTaskPage ? 'task-' : '';
+        const isAccordionOpen = openAccordions.has(`${accordionPrefix}${b.id}`);
 
-        let hmoMarkup = '';
         if (b.isHmo && b.units && b.units.length > 0) {
-            const accordionPrefix = isTaskPage ? 'task-' : '';
-            const isAccordionOpen = openAccordions.has(`${accordionPrefix}${b.id}`);
-
-            hmoMarkup = `
-                <button class="hmo-toggle-btn" id="hmo-btn-${accordionPrefix}${b.id}" onclick="toggleHmoAccordion(${b.id}, '${accordionPrefix}')">
-                    <span>${isAccordionOpen ? '📂 Hide Flats / Units 🔼' : '📂 Show Flats / Units 🔽'}</span>
-                </button>
-                <div class="hmo-units-wrapper ${isAccordionOpen ? 'open' : ''}" id="hmo-wrapper-${accordionPrefix}${b.id}">
-                    ${b.units.map(u => `
-                        <div class="hmo-unit-box">
+            return `
+                <div class="lockbox-item">
+                    <div class="hmo-split-container ${isAccordionOpen ? 'open' : ''}" id="hmo-container-${accordionPrefix}${b.id}">
+                        <div class="hmo-parent-col">
                             <div class="lockbox-header">
-                                <h5 style="margin:0; font-size:13px; color: var(--zone-text);">🚪 ${u.unitName}</h5>
-                                <span class="status-badge bg-${u.status}">${u.status === 'green' ? 'Keys Inside' : (u.status === 'red' ? 'Keys Missing' : 'Pending')}</span>
+                                <h4>🏢 ${b.name} <span style="font-size:11px; color:var(--text-muted);">(HMO Main Building)</span></h4>
+                                <span class="status-badge bg-${b.status}">${statusLabel}</span>
                             </div>
-
+                            
                             <div class="media-gallery">
-                                ${(u.photos || []).map(p => `<img src="${p}" class="media-thumb" onclick="openMediaViewer('${p}', 'image')">`).join('')}
-                                ${(u.videos || []).map(v => `<video src="${v}" class="media-thumb" onclick="openMediaViewer('${v}', 'video')"></video>`).join('')}
+                                ${(b.photos || []).map(p => `<img src="${p}" class="media-thumb" onclick="openMediaViewer('${p}', 'image')">`).join('')}
+                                ${(b.videos || []).map(v => `<video src="${v}" class="media-thumb" onclick="openMediaViewer('${v}', 'video')">`).join('')}
                             </div>
 
-                            <div style="display:flex; gap:6px; margin-bottom:6px;">
-                                <button class="btn-small" style="background:var(--section-bg); color:var(--text); border:1px solid var(--border);" onclick="addMoreMedia(${b.id}, 'photo', ${u.id})">+ Photo</button>
-                                <button class="btn-small" style="background:var(--section-bg); color:var(--text); border:1px solid var(--border);" onclick="addMoreMedia(${b.id}, 'video', ${u.id})">+ Video</button>
+                            <div style="display:flex; gap:6px; margin-bottom:8px;">
+                                <button class="btn-small" style="background:var(--section-bg); color:var(--text); border:1px solid var(--border);" onclick="addMoreMedia(${b.id}, 'photo')">+ Photo</button>
+                                <button class="btn-small" style="background:var(--section-bg); color:var(--text); border:1px solid var(--border);" onclick="addMoreMedia(${b.id}, 'video')">+ Video</button>
                             </div>
 
-                            ${renderSingleActionBlock(b, u, isTaskPage, u.id)}
+                            ${renderSingleActionBlock(b, b, isTaskPage, null)}
+
+                            <button class="hmo-toggle-btn" id="hmo-btn-${accordionPrefix}${b.id}" onclick="toggleHmoAccordion(${b.id}, '${accordionPrefix}')">
+                                <span>${isAccordionOpen ? '📂 Hide Flats / Units 🔼' : '📂 Show Flats / Units 🔽'}</span>
+                            </button>
+
+                            <button style="background: transparent; color: var(--text-muted); width: auto; font-size: 11px; margin-top: 6px; padding: 2px 4px;" onclick="deleteBox(${b.id})">🗑 Delete Property</button>
                         </div>
-                    `).join('')}
+
+                        <div class="hmo-child-col">
+                            <h5 style="margin: 0 0 8px 0; font-size: 13px; color: var(--zone-text);">🏢 Units & Flats (${b.units.length})</h5>
+                            ${b.units.map(u => `
+                                <div class="hmo-unit-box">
+                                    <div class="lockbox-header">
+                                        <h5 style="margin:0; font-size:13px; color: var(--zone-text);">🚪 ${u.unitName}</h5>
+                                        <span class="status-badge bg-${u.status}">${u.status === 'green' ? 'Keys Inside' : (u.status === 'red' ? 'Keys Missing' : 'Pending')}</span>
+                                    </div>
+
+                                    <div class="media-gallery">
+                                        ${(u.photos || []).map(p => `<img src="${p}" class="media-thumb" onclick="openMediaViewer('${p}', 'image')">`).join('')}
+                                        ${(u.videos || []).map(v => `<video src="${v}" class="media-thumb" onclick="openMediaViewer('${v}', 'video')">`).join('')}
+                                    </div>
+
+                                    <div style="display:flex; gap:6px; margin-bottom:6px;">
+                                        <button class="btn-small" style="background:var(--section-bg); color:var(--text); border:1px solid var(--border);" onclick="addMoreMedia(${b.id}, 'photo', ${u.id})">+ Photo</button>
+                                        <button class="btn-small" style="background:var(--section-bg); color:var(--text); border:1px solid var(--border);" onclick="addMoreMedia(${b.id}, 'video', ${u.id})">+ Video</button>
+                                    </div>
+
+                                    ${renderSingleActionBlock(b, u, isTaskPage, u.id)}
+                                </div>
+                            `).join('')}
+                        </div>
+                    </div>
                 </div>
             `;
         }
@@ -1194,7 +1248,7 @@
         return `
             <div class="lockbox-item">
                 <div class="lockbox-header">
-                    <h4>🏢 ${b.name} ${b.isHmo ? '<span style="font-size:11px; color:var(--text-muted);">(HMO Main Building)</span>' : ''}</h4>
+                    <h4>🏢 ${b.name}</h4>
                     <span class="status-badge bg-${b.status}">${statusLabel}</span>
                 </div>
                 
@@ -1209,7 +1263,6 @@
                 </div>
 
                 ${renderSingleActionBlock(b, b, isTaskPage, null)}
-                ${hmoMarkup}
 
                 <button style="background: transparent; color: var(--text-muted); width: auto; font-size: 11px; margin-top: 6px; padding: 2px 4px;" onclick="deleteBox(${b.id})">🗑 Delete Property</button>
             </div>
