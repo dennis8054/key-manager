@@ -349,18 +349,44 @@
             margin: 0;
         }
 
-        .action-block {
+        /* Collapsible Action Blocks styling */
+        details.action-block {
             background-color: var(--section-bg);
-            padding: 8px 10px;
             border-radius: 6px;
             margin-top: 8px;
             border: 1px solid var(--border);
+            overflow: hidden;
         }
 
-        .section-title {
+        details.action-block summary {
+            padding: 8px 10px;
             font-size: 12px;
             font-weight: 600;
-            margin-bottom: 6px;
+            cursor: pointer;
+            user-select: none;
+            outline: none;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+        }
+
+        details.action-block summary::-webkit-details-marker {
+            display: none;
+        }
+
+        details.action-block summary::after {
+            content: "▼";
+            font-size: 10px;
+            transition: transform 0.2s;
+        }
+
+        details.action-block[open] summary::after {
+            transform: rotate(180deg);
+        }
+
+        .action-content {
+            padding: 8px 10px 10px 10px;
+            border-top: 1px solid var(--border);
         }
 
         .note-input { display: none; }
@@ -828,72 +854,76 @@
                 <button class="history-btn" onclick="openHistory(${b.id}, ${unitId})">📜 History</button>
             </div>
 
-            <div class="action-block" style="border-left: 3px solid var(--red);">
-                <div class="section-title">🔑 Give Keys / Remove Keys</div>
-                
-                ${isParentHmo ? `
-                <select id="${keyPrefix}target-flat-give-${b.id}">${flatOptionsHtml}</select>
-                <select id="${keyPrefix}key-type-give-${b.id}">
-                    <option value="Flat Key">Key Type: Flat Key</option>
-                    <option value="Main Door Key">Key Type: Main Door Key</option>
-                    <option value="Both Keys">Key Type: Both Keys</option>
-                </select>
-                ` : ''}
+            <!-- COLLAPSIBLE GIVE KEYS -->
+            <details class="action-block" style="border-left: 3px solid var(--red);">
+                <summary>🔑 Give Keys / Remove Keys</summary>
+                <div class="action-content">
+                    ${isParentHmo ? `
+                    <select id="${keyPrefix}target-flat-give-${b.id}">${flatOptionsHtml}</select>
+                    <select id="${keyPrefix}key-type-give-${b.id}">
+                        <option value="Flat Key">Key Type: Flat Key</option>
+                        <option value="Main Door Key">Key Type: Main Door Key</option>
+                        <option value="Both Keys">Key Type: Both Keys</option>
+                    </select>
+                    ` : ''}
 
-                <select id="${keyPrefix}staff-give-${b.id}">
-                    <option value="Alex">By: Alex</option>
-                    <option value="Denis">By: Denis</option>
-                </select>
+                    <select id="${keyPrefix}staff-give-${b.id}">
+                        <option value="Alex">By: Alex</option>
+                        <option value="Denis">By: Denis</option>
+                    </select>
 
-                <select id="${keyPrefix}reason-give-${b.id}" onchange="toggleReasonNote(${b.id}, 'give', '${keyPrefix}')">
-                    <option value="Tenant Moved In">Reason: Tenant Moved In</option>
-                    <option value="Tenant Lost Keys">Reason: Tenant Lost Keys</option>
-                    <option value="Flat LockBox Empty - Giving Main LockBox Key">Reason: Flat LockBox Empty (Giving Main Key)</option>
-                    <option value="Other">Reason: Other</option>
-                </select>
+                    <select id="${keyPrefix}reason-give-${b.id}" onchange="toggleReasonNote(${b.id}, 'give', '${keyPrefix}')">
+                        <option value="Tenant Moved In">Reason: Tenant Moved In</option>
+                        <option value="Tenant Lost Keys">Reason: Tenant Lost Keys</option>
+                        <option value="Flat LockBox Empty - Giving Main LockBox Key">Reason: Flat LockBox Empty (Giving Main Key)</option>
+                        <option value="Other">Reason: Other</option>
+                    </select>
 
-                <input type="text" id="${keyPrefix}note-give-${b.id}" class="note-input" placeholder="Type reason...">
+                    <input type="text" id="${keyPrefix}note-give-${b.id}" class="note-input" placeholder="Type reason...">
 
-                <div class="checkbox-group">
-                    <input type="checkbox" id="${keyPrefix}check-give-${b.id}">
-                    <label for="${keyPrefix}check-give-${b.id}">Keys removed (LockBox empty)</label>
+                    <div class="checkbox-group">
+                        <input type="checkbox" id="${keyPrefix}check-give-${b.id}">
+                        <label for="${keyPrefix}check-give-${b.id}">Keys removed (LockBox empty)</label>
+                    </div>
+
+                    <button style="background-color: var(--red);" onclick="updateKeysGiven(${b.id}, '${prefix}', ${unitId})">Update: Keys Removed</button>
                 </div>
+            </details>
 
-                <button style="background-color: var(--red);" onclick="updateKeysGiven(${b.id}, '${prefix}', ${unitId})">Update: Keys Removed</button>
-            </div>
+            <!-- COLLAPSIBLE RESTOCK KEYS -->
+            <details class="action-block" style="border-left: 3px solid var(--green);">
+                <summary>📥 Restock / Add Keys</summary>
+                <div class="action-content">
+                    ${isParentHmo ? `
+                    <select id="${keyPrefix}target-flat-add-${b.id}">${flatOptionsHtml}</select>
+                    <select id="${keyPrefix}key-type-add-${b.id}">
+                        <option value="Flat Key">Key Type: Flat Key</option>
+                        <option value="Main Door Key">Key Type: Main Door Key</option>
+                        <option value="Both Keys">Key Type: Both Keys</option>
+                    </select>
+                    ` : ''}
 
-            <div class="action-block" style="border-left: 3px solid var(--green);">
-                <div class="section-title">📥 Restock / Add Keys</div>
-                
-                ${isParentHmo ? `
-                <select id="${keyPrefix}target-flat-add-${b.id}">${flatOptionsHtml}</select>
-                <select id="${keyPrefix}key-type-add-${b.id}">
-                    <option value="Flat Key">Key Type: Flat Key</option>
-                    <option value="Main Door Key">Key Type: Main Door Key</option>
-                    <option value="Both Keys">Key Type: Both Keys</option>
-                </select>
-                ` : ''}
+                    <select id="${keyPrefix}staff-add-${b.id}">
+                        <option value="Alex">By: Alex</option>
+                        <option value="Denis">By: Denis</option>
+                    </select>
 
-                <select id="${keyPrefix}staff-add-${b.id}">
-                    <option value="Alex">By: Alex</option>
-                    <option value="Denis">By: Denis</option>
-                </select>
+                    <select id="${keyPrefix}reason-add-${b.id}" onchange="toggleReasonNote(${b.id}, 'add', '${keyPrefix}')">
+                        <option value="Refilled / Standard">Reason: Refilled</option>
+                        <option value="Added Spare Keys">Reason: Spare Keys</option>
+                        <option value="Other">Reason: Other</option>
+                    </select>
 
-                <select id="${keyPrefix}reason-add-${b.id}" onchange="toggleReasonNote(${b.id}, 'add', '${keyPrefix}')">
-                    <option value="Refilled / Standard">Reason: Refilled</option>
-                    <option value="Added Spare Keys">Reason: Spare Keys</option>
-                    <option value="Other">Reason: Other</option>
-                </select>
+                    <input type="text" id="${keyPrefix}note-add-${b.id}" class="note-input" placeholder="Type note...">
 
-                <input type="text" id="${keyPrefix}note-add-${b.id}" class="note-input" placeholder="Type note...">
+                    <div class="checkbox-group">
+                        <input type="checkbox" id="${keyPrefix}check-add-${b.id}">
+                        <label for="${keyPrefix}check-add-${b.id}">Keys inside LockBox</label>
+                    </div>
 
-                <div class="checkbox-group">
-                    <input type="checkbox" id="${keyPrefix}check-add-${b.id}">
-                    <label for="${keyPrefix}check-add-${b.id}">Keys inside LockBox</label>
+                    <button style="background-color: var(--green);" onclick="updateKeysAdded(${b.id}, '${prefix}', ${unitId})">Update: Keys Inside</button>
                 </div>
-
-                <button style="background-color: var(--green);" onclick="updateKeysAdded(${b.id}, '${prefix}', ${unitId})">Update: Keys Inside</button>
-            </div>
+            </details>
         `;
     }
 
